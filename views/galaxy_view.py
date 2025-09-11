@@ -176,13 +176,18 @@ class GalaxyView(arcade.View):
         if self.selected_sprite:
             self.selected_sprite = None
 
+        # Unproject screen coordinates to world coordinates
+        world_pos = self.map_camera.unproject((x, y))
+        world_x = world_pos.x
+        world_y = world_pos.y
+
         for fleet in self.fleet_clickboxes:
-            if fleet.collides_with_point((x, y)):
+            if fleet.collides_with_point((world_x, world_y)):
                 self.selected_sprite = fleet
                 return
 
         for star in self.star_clickboxes:
-            if star.collides_with_point((x, y)):
+            if star.collides_with_point((world_x, world_y)):
                 self.selected_sprite = star
                 return
 
@@ -198,43 +203,43 @@ class GalaxyView(arcade.View):
 
 
 class SovereigntyOverlay:
-
     def __init__(self, galaxy):
         self.galaxy = galaxy
         self.vor = None
-        self.stars_by_id = {}
+        self.stars = []
+        self.owned_star_names = set()
 
     def calculate_galaxy_map(self):
-        owned_stars = [star for star in self.galaxy.galaxy_stars if star.owner is not None]
+        # Use all stars for Voronoi
+        self.stars = list(self.galaxy.galaxy_stars)
+        self.owned_star_names = {star.name for star in self.stars if star.owner is not None}
 
-        if not owned_stars:
+        if len(self.stars) < 2:
             self.vor = None
             return
 
-        self.stars_by_id = {star.name: star for star in owned_stars}
-
-        points = [(star.x, star.y) for star in owned_stars]
+        points = [(star.x, star.y) for star in self.stars]
         self.vor = Voronoi(points)
 
     def draw_voronoi_map(self):
         if self.vor is None:
             return
 
-        for i, region_index in enumerate(self.vor.point_region):
+        for i, star in enumerate(self.stars):
+            region_index = self.vor.point_region[i]
             if region_index == -1:
                 continue
 
             region = self.vor.regions[region_index]
-            if not region:
-                continue
+            if not region or -1 in region:
+                continue  # Skip infinite or empty regions
 
-            # Get the coordinates for the vertices of this polygon
             vertices_np = self.vor.vertices[region]
             vertices = [tuple(v) for v in vertices_np]
 
-            star = self.stars_by_id[self.vor.point_region[i]]
-            color = star.owner.color
+            if star.name in self.owned_star_names:
+                color = (*star.owner.color[:3], 100)  # RGBA with transparency
+            else:
+                color = (0, 0, 0, 0)  # Fully transparent
 
-            # Draw the filled polygon
-            print(vertices)
             arcade.draw_polygon_filled(vertices, color)

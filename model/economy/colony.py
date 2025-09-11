@@ -67,6 +67,7 @@ class Colony:
         self.job_offers = job_board
 
     def setup_capital(self):
+        print(f"capital deployed on planet {self.planet.name}. Nation color is {self.owner.color}")
         self.buildings = []
 
 

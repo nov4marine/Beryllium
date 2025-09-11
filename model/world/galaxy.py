@@ -182,7 +182,7 @@ class Galaxy:
             system = starting_systems[i]
             system.owner = nation
             nation.solar_systems.append(system)
-            print(system)
+            print(f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
             system.assign_capital(nation)
 
 
@@ -194,4 +194,7 @@ class GalaxyStar:
         self.color = color
         self.radius = radius
         self.solar_system = solar_system
-        self.owner = solar_system.owner
+
+    @property
+    def owner(self):
+        return self.solar_system.owner

@@ -233,11 +233,11 @@ class Star(CelestialBody):
     def get_position(self):
         return (0, 0)  # Always at system center
 
-    def draw(self, screen, camera, parent_pos):
+    #def draw(self, screen, camera, parent_pos):
         # Custom star drawing (glow, etc.) can go here
-        world_x, world_y = self.get_position()
-        screen_x, screen_y = camera.apply(world_x, world_y)
-        arcade.draw_circle_filled((int(screen_x), int(screen_y)), int(self.size * camera.zoom), self.color)
+        #world_x, world_y = self.get_position()
+        #screen_x, screen_y = camera.apply(world_x, world_y)
+        #arcade.draw_circle_filled((int(screen_x), int(screen_y)), int(self.size * camera.zoom), self.color)
 
 
 class Planet(CelestialBody):
@@ -255,9 +255,29 @@ class Planet(CelestialBody):
 
 class Moon(Planet):
     def __init__(self, name, radius, size, color, angle, speed, parent, **kwargs):
-        super().__init__(name, "moon", radius, size, color, angle, speed, parent, **kwargs)
+        super().__init__(
+            name=name,
+            radius=radius,
+            size=size,
+            color=color,
+            angle=angle,
+            speed=speed,
+            parent=parent,
+            planet_type="moon",
+            **kwargs
+        )
 
 
 class Asteroid(CelestialBody):
     def __init__(self, name, radius, size, color, angle, speed, parent, **kwargs):
-        super().__init__(name, "asteroid", radius, size, color, angle, speed, parent, **kwargs)
+        super().__init__(
+            name=name,
+            body_type="asteroid",
+            radius=radius,
+            size=size,
+            color=color,
+            angle=angle,
+            speed=speed,
+            parent=parent,
+            **kwargs
+        )
