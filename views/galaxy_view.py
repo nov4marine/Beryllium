@@ -208,6 +208,7 @@ class SovereigntyOverlay:
         self.vor = None
         self.stars = []
         self.owned_star_names = set()
+        self.shape_cache = None  # This will hold our cached shapes
 
     def calculate_galaxy_map(self):
         # Use all stars for Voronoi
@@ -216,15 +217,14 @@ class SovereigntyOverlay:
 
         if len(self.stars) < 2:
             self.vor = None
+            self.shape_cache = None
             return
 
         points = [(star.x, star.y) for star in self.stars]
         self.vor = Voronoi(points)
 
-    def draw_voronoi_map(self):
-        if self.vor is None:
-            return
-
+        # --- Build the shape cache ---
+        shape_list = arcade.shape_list.ShapeElementList()
         for i, star in enumerate(self.stars):
             region_index = self.vor.point_region[i]
             if region_index == -1:
@@ -240,6 +240,14 @@ class SovereigntyOverlay:
             if star.name in self.owned_star_names:
                 color = (*star.owner.color[:3], 100)  # RGBA with transparency
             else:
-                color = (0, 0, 0, 0)  # Fully transparent
+                continue  # Don't add unowned cells to the cache
 
-            arcade.draw_polygon_filled(vertices, color)
+            # Create a Shape for this polygon and add to the list
+            shape = arcade.shape_list.create_polygon(vertices, color)
+            shape_list.append(shape)
+
+        self.shape_cache = shape_list
+
+    def draw_voronoi_map(self):
+        if self.shape_cache:
+            self.shape_cache.draw()
