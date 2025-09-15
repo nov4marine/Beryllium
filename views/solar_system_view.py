@@ -8,9 +8,15 @@ class SolarSystemView(arcade.View):
         self.model = game_model
         self.solar_system = galaxy_star.solar_system
         self.galaxy_view = galaxy_view
-        self.manager = self.window.manager
+
+        # Controller Elements
+        self.solarsystemui_manager = arcade.gui.UIManager()
+        self.persistent_ui = self.window.persistent_ui
+        self.asset_manager = self.window.asset_manager
         self.calendar = self.window.calendar
         self.selected_sprite = None
+
+        self.solar_system_background = self.asset_manager.ui_art.get("solar_system_background")
 
         self.celestial_bodies = arcade.SpriteList()
         self.fleets = arcade.SpriteList()
@@ -30,12 +36,12 @@ class SolarSystemView(arcade.View):
 
         self.setup()
 
-        self.root = self.manager.add(arcade.gui.UIAnchorLayout())
+        self.root = self.solarsystemui_manager.add(arcade.gui.UIAnchorLayout())
 
     def on_show_view(self):
         # --- UI stuff specific to Solar System View ---
         self.root.clear()
-        self.manager.enable()
+        self.solarsystemui_manager.enable()
         system_card = arcade.gui.UIAnchorLayout(size_hint=(0.3, 0.05))
         system_card.with_background(color=arcade.color.ANDROID_GREEN)
         self.root.add(system_card, anchor_x="center", anchor_y="bottom")
@@ -52,7 +58,8 @@ class SolarSystemView(arcade.View):
             self.window.show_view(self.galaxy_view)
 
     def on_hide_view(self):
-        self.manager.remove(self.root)
+        self.solarsystemui_manager.disable()
+        #self.solarsystemui_manager.remove(self.root)
 
     def setup(self):
         # --- Celestial Body Sprite Setup ---
@@ -89,17 +96,31 @@ class SolarSystemView(arcade.View):
 
     def on_draw(self):
         self.clear()
+        # --- Solar System Background ---
+        background_rect = arcade.LBWH(
+            left=0,
+            bottom=0,
+            width=self.window.width,
+            height=self.window.height,
+        )
+        arcade.draw.draw_texture_rect(
+            texture=self.solar_system_background,
+            rect=background_rect,
+        )
+
         self.map_camera.use()
+        camera_zoom = self.map_camera.zoom
         # --- Draw Solar System Celestials ---
         # Draw faint orbital rings for orbiting bodies
         for body in self.solar_system.bodies:
             if body.parent:
                 parent_pos = body.parent.get_position()
                 arcade.draw_circle_outline(
-                    color=(100, 100, 140),  # Faint blue-gray color
+                    color=(100, 100, 140, 180),  # Faint blue-gray color
                     center_x=(int(parent_pos[0])),
                     center_y=(int(parent_pos[1])),
                     radius=int(body.radius),
+                    border_width=1/camera_zoom
                 )
             else:
                 pass
@@ -107,7 +128,8 @@ class SolarSystemView(arcade.View):
         self.celestial_bodies.draw()
 
         self.hud_camera.use()
-        self.manager.draw()
+        self.solarsystemui_manager.draw()
+        self.persistent_ui.draw()
 
     def on_update(self, delta_time):
         """

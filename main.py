@@ -5,6 +5,7 @@ from model.world.calendar import Calendar
 from views.galaxy_view import GalaxyView
 # from views.solar_system_view import SolarSystemView
 from views.ui_stuff import PersistentUI
+from model.assets import AssetManager
 
 
 class MyGame:
@@ -19,14 +20,16 @@ class MyGame:
             height=self.height,
             title=self.title
         )
-        self.window.manager = arcade.gui.UIManager()
+
+        # Window Components
         self.window.calendar = Calendar()
+        self.window.asset_manager = AssetManager()
+        self.window.persistent_ui = PersistentUI(self.game_model, self.game_model.player_nation)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()
         self.galaxy_view = GalaxyView(game_model=self.game_model)
         self.main_menu_view = None
-        self.persistent_ui = PersistentUI(self.game_model, self.game_model.player_nation)
 
         self.window.show_view(self.galaxy_view)
 

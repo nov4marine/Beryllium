@@ -7,10 +7,11 @@ class PersistentUI:
     def __init__(self, game_model, player_nation):
         self.game_model = game_model
         self.manager = arcade.gui.UIManager()
+        self.manager.enable()
         self.player_nation = player_nation
 
         # --- Sub-Components ---
-        planet_interface = PlanetInterface(game_model, player_nation)
+        #planet_interface = PlanetInterface(game_model, player_nation)
 
         # --- HUD ---
         self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
@@ -48,6 +49,9 @@ class PersistentUI:
         # --- Time ---
         self.calendar = arcade.gui.UILabel(text="Date")
         # self.calendar = arcade.gui.UISpriteWidget()
+
+    def draw(self):
+        self.manager.draw()
 
     def on_monthly_update(self):
         self.gdp.text = self.player_nation.gdp

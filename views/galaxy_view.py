@@ -9,24 +9,35 @@ class GalaxyView(arcade.View):
     def __init__(self, game_model):
         super().__init__()
         self.model = game_model
-        self.persistent_ui = self.window.manager
-        self.persistent_ui.enable()
+        self.persistent_ui = self.window.persistent_ui
         self.galaxy = self.model.galaxy
+        self.galaxyui_manager = arcade.gui.UIManager()
+        # Controller Elements
+        self.asset_manager = self.window.asset_manager
         self.calendar = self.window.calendar
         self.selected_sprite = None
 
+        # Dictionary to hold different map overlays and map modes
         self.maps = {
             "sovereignty": SovereigntyOverlay(self.galaxy)
         }
 
+        # --- Load Assets ---
+        self.galaxy_map_background = self.asset_manager.ui_art.get("galaxy_background")
+        self.galaxy_disk_texture = self.asset_manager.ui_art.get("m51_4k")
+
+        # --- Sprite Lists ---
         self.star_sprites = arcade.SpriteList()
         self.star_clickboxes = arcade.SpriteList()
 
         self.fleet_sprites = arcade.SpriteList()
         self.fleet_clickboxes = arcade.SpriteList()
 
+        self.star_lablels = []
+
         self.hyperlane_visuals = []
 
+        # Cameras
         self.map_camera = arcade.camera.Camera2D()
         self.hud_camera = arcade.camera.Camera2D()
 
@@ -37,7 +48,6 @@ class GalaxyView(arcade.View):
         self.pan_down = False
 
         self.background_color = arcade.color.SMOKY_BLACK
-        # self.background = arcade.load_texture()
 
         self.setup()
 
@@ -45,6 +55,7 @@ class GalaxyView(arcade.View):
         # and set them to None
 
     def on_show_view(self):
+        self.galaxyui_manager.enable()
         self.selected_sprite = None
 
     def setup(self):
@@ -76,6 +87,23 @@ class GalaxyView(arcade.View):
         # --- Map Overlays ---
         self.maps["sovereignty"].calculate_galaxy_map()
 
+        star_lablels = []
+        for star in self.galaxy.galaxy_stars:
+            screen_pos = self.map_camera.project((star.x, star.y))
+            screen_x = screen_pos.x
+            screen_y = screen_pos.y
+            label = arcade.Text(
+                text=star.name,
+                x=screen_x,
+                y=(screen_y - 40) / self.map_camera.zoom,  # Slightly below the star
+                color=(255, 255, 255, 140),
+                anchor_x="center",
+                font_size=12 / self.map_camera.zoom  # Scale font size with zoom
+            )
+            star_lablels.append(label)
+        self.star_lablels = star_lablels
+
+
     def pan_map_camera(self, delta_time):
         pan_speed = 100
         current_position = self.map_camera.position
@@ -96,21 +124,58 @@ class GalaxyView(arcade.View):
 
     def on_draw(self):
         self.clear()
+        # --- Galaxy Background ---
+        background_rect = arcade.LBWH(
+            left=0,
+            bottom=0,
+            width=self.window.width,
+            height=self.window.height,
+        )
+        arcade.draw.draw_texture_rect(
+            texture=self.galaxy_map_background,
+            rect=background_rect,
+        )
+
         self.map_camera.use()  # Map camera to draw all game world elements
         camera_zoom = self.map_camera.zoom
+        # All camera dependent drawing goes here:
 
+        # --- Galaxy Disk ---
+        disk_multiplier = 1.1
+        disk = arcade.LBWH(
+            left=-self.galaxy.galaxy_size * disk_multiplier,
+            bottom=-self.galaxy.galaxy_size * disk_multiplier,
+            width=self.galaxy.galaxy_size * 2 * disk_multiplier,
+            height=self.galaxy.galaxy_size * 2 * disk_multiplier,
+        )
+        arcade.draw.draw_texture_rect(
+            texture=self.galaxy_disk_texture,
+            rect=disk,
+            alpha=140,
+        )
+
+        # --- Map Overlays ---
         self.maps["sovereignty"].draw_voronoi_map()
 
+        # --- Hyperlanes ---
+        arcade.draw_lines(
+            self.hyperlane_visuals,
+            color=(120, 180, 225, 180),
+            line_width=1/camera_zoom
+        )
+
+        # --- Stars ---
         self.star_sprites.draw()
         self.star_clickboxes.draw()
         for clickbox in self.star_clickboxes:
             clickbox.radius = clickbox.model_reference.radius * 2 / camera_zoom
 
-        arcade.draw_lines(
-            self.hyperlane_visuals,
-            color=(120, 180, 225),
-            line_width=3
-        )
+        # --- Everything above this line is background stuff that should not be occluded by active elements ---
+
+        if camera_zoom > 0.5:  # Adjust threshold as needed
+            for label in self.star_lablels:
+                label.draw()
+
 
         # --- Selection Highlight ---
         if self.selected_sprite:
@@ -122,7 +187,9 @@ class GalaxyView(arcade.View):
                 border_width=3,
             )
 
+        # --- Static UI Elements ---
         self.hud_camera.use()  # HUD camera to draw all UI elements
+        self.galaxyui_manager.draw()
         self.persistent_ui.draw()
 
     def on_update(self, delta_time):

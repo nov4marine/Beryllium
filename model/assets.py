@@ -14,7 +14,6 @@ class AssetManager:
         }
 
         #self.images  = self.load_images()
-        self.celestial_sprites = self.load_celestial_sprites()
         self.portraits = self.load_portraits()
         self.ui_art = self.load_ui_art()
         self.ui_icons = self.load_ui_icons()
