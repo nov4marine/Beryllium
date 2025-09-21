@@ -1,13 +1,13 @@
 from model.world.galaxy import Galaxy
 from model.politics.nation import Nation
+from model.world.calendar import Calendar
 
 
 class GameModel:
     def __init__(self):
         # --- Core Game Attributes ---
-        self.current_date = 0
+        self.calendar = Calendar(self)
         self.game_paused = False
-        self.game_speed = 1.0
 
         # --- Major Game Entities ---
         self.galaxy = None
@@ -33,6 +33,10 @@ class GameModel:
         self.player_nation = Nation(name="UNE")
         self.nations.append(self.player_nation)
 
+        for nation in self.nations:
+            self.calendar.add_daily_observer(nation)
+            self.calendar.add_monthly_observer(nation)
+
         # Add AI Empires
 
         # --- Deploy nations ---
@@ -40,6 +44,12 @@ class GameModel:
         for nation in self.nations:
             nation.initialize_nation()
 
-    def update(self, delta_time):
-        """Update the game state."""
-        pass
+    def on_monthly_update(self):
+        """The monthly update loop for the game model."""
+        for nation in self.nations:
+            nation.on_monthly_update()
+
+    def on_daily_update(self):
+        """The daily update loop for the game model."""
+        for nation in self.nations:
+            nation.on_daily_update()

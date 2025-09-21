@@ -1,5 +1,6 @@
 import arcade
 import arcade.gui
+from views.ui_stuff import PersistentUI, BaseCelestialLabel, PlanetLabel
 
 
 class SolarSystemView(arcade.View):
@@ -22,6 +23,7 @@ class SolarSystemView(arcade.View):
         self.fleets = arcade.SpriteList()
 
         self.orbit_visuals = []
+        self.planet_labels = []
 
         self.map_camera = arcade.Camera2D()
         self.hud_camera = arcade.Camera2D()
@@ -46,7 +48,7 @@ class SolarSystemView(arcade.View):
         system_card.with_background(color=arcade.color.ANDROID_GREEN)
         self.root.add(system_card, anchor_x="center", anchor_y="bottom")
 
-        system_label = arcade.gui.UILabel(text="Star System")
+        system_label = arcade.gui.UILabel(text=f"Star System: {self.solar_system.name}")
         return_to_galaxy = arcade.gui.UIFlatButton(text="Return to Galaxy View")
 
         system_card.add(system_label, anchor_x="left")
@@ -70,6 +72,12 @@ class SolarSystemView(arcade.View):
             celestial_sprite.center_y = body_pos[1]
             celestial_sprite.model_reference = body
             self.celestial_bodies.append(celestial_sprite)
+
+        # --- Planet Labels ---
+        for body in self.solar_system.bodies:
+            label = PlanetLabel(body)
+            self.planet_labels.append(label)
+
 
     def pan_map_camera(self, delta_time):
         pan_speed = 80 / self.map_camera.zoom
@@ -126,6 +134,10 @@ class SolarSystemView(arcade.View):
                 pass
         # Draw all bodies (stars, planets, moons, asteroids)
         self.celestial_bodies.draw()
+        
+        if camera_zoom > 0.5:
+            for label in self.planet_labels:
+                label.draw()
 
         self.hud_camera.use()
         self.solarsystemui_manager.draw()

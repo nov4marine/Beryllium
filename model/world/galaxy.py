@@ -8,6 +8,7 @@ from model.world.solar_system import SolarSystem
 
 class Galaxy:
     def __init__(self, galaxy_size=6000, num_stars=1000):
+        """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
         self.galaxy_size = galaxy_size # Maxum radius from center
         self.num_stars = num_stars
         self.galaxy_disk = None  # Placeholder for galactic disk image

@@ -1,6 +1,7 @@
 import arcade
 import arcade.gui
 from views.solar_system_view import SolarSystemView
+from views.ui_stuff import BaseCelestialLabel, GalaxyStarLabel
 
 from scipy.spatial import Voronoi
 
@@ -11,7 +12,8 @@ class GalaxyView(arcade.View):
         self.model = game_model
         self.persistent_ui = self.window.persistent_ui
         self.galaxy = self.model.galaxy
-        self.galaxyui_manager = arcade.gui.UIManager()
+
+        self.world_ui_manager = arcade.gui.UIManager()
         # Controller Elements
         self.asset_manager = self.window.asset_manager
         self.calendar = self.window.calendar
@@ -55,7 +57,7 @@ class GalaxyView(arcade.View):
         # and set them to None
 
     def on_show_view(self):
-        self.galaxyui_manager.enable()
+        self.world_ui_manager.enable()
         self.selected_sprite = None
 
     def setup(self):
@@ -87,21 +89,10 @@ class GalaxyView(arcade.View):
         # --- Map Overlays ---
         self.maps["sovereignty"].calculate_galaxy_map()
 
-        star_lablels = []
-        for star in self.galaxy.galaxy_stars:
-            screen_pos = self.map_camera.project((star.x, star.y))
-            screen_x = screen_pos.x
-            screen_y = screen_pos.y
-            label = arcade.Text(
-                text=star.name,
-                x=screen_x,
-                y=(screen_y - 40) / self.map_camera.zoom,  # Slightly below the star
-                color=(255, 255, 255, 140),
-                anchor_x="center",
-                font_size=12 / self.map_camera.zoom  # Scale font size with zoom
-            )
-            star_lablels.append(label)
-        self.star_lablels = star_lablels
+        self.star_labels = []
+        for star_model in self.galaxy.galaxy_stars:
+            label = GalaxyStarLabel(star_model)
+            self.star_labels.append(label)
 
 
     def pan_map_camera(self, delta_time):
@@ -121,6 +112,7 @@ class GalaxyView(arcade.View):
             new_x += pan_speed
 
         self.map_camera.position = (new_x, new_y)
+        #self.hud_camera.position = self.map_camera.position
 
     def on_draw(self):
         self.clear()
@@ -172,10 +164,10 @@ class GalaxyView(arcade.View):
 
         # --- Everything above this line is background stuff that should not be occluded by active elements ---
 
+        # --- Star Details ---
         if camera_zoom > 0.5:  # Adjust threshold as needed
-            for label in self.star_lablels:
+            for label in self.star_labels:
                 label.draw()
-
 
         # --- Selection Highlight ---
         if self.selected_sprite:
@@ -189,7 +181,8 @@ class GalaxyView(arcade.View):
 
         # --- Static UI Elements ---
         self.hud_camera.use()  # HUD camera to draw all UI elements
-        self.galaxyui_manager.draw()
+
+        self.world_ui_manager.draw()
         self.persistent_ui.draw()
 
     def on_update(self, delta_time):

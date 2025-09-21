@@ -4,11 +4,11 @@ from views.UI_stuff.planet_menu import PlanetInterface
 
 
 class PersistentUI:
-    def __init__(self, game_model, player_nation):
+    def __init__(self, game_model):
         self.game_model = game_model
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
-        self.player_nation = player_nation
+        self.player_nation = None
 
         # --- Sub-Components ---
         #planet_interface = PlanetInterface(game_model, player_nation)
@@ -33,6 +33,7 @@ class PersistentUI:
         self.stats.add(self.gdp)
         self.stats.add(self.gdp_per_capita)
         self.stats.add(self.population)
+
         self.resource_bar.add(self.stats, anchor_x="right")
         # education
         self.standard_of_living = arcade.gui.UILabel(text="Standard of Living")
@@ -47,8 +48,12 @@ class PersistentUI:
         self.starbases = arcade.gui.UILabel(text="Starbases")
         # military
         # --- Time ---
-        self.calendar = arcade.gui.UILabel(text="Date")
+        self.calendar = arcade.gui.UIAnchorLayout(size_hint=(0.1, 1))
         # self.calendar = arcade.gui.UISpriteWidget()
+        self.calendar.with_background(color=arcade.color.ARMY_GREEN)
+        self.date = arcade.gui.UILabel(text=self.game_model.calendar.__str__())
+        self.calendar.add(self.date)
+        self.resource_bar.add(self.calendar, anchor_x="right")
 
     def draw(self):
         self.manager.draw()
@@ -65,3 +70,60 @@ class PersistentUI:
         self.bureaucracy.text = self.player_nation.bureaucracy
         self.authority.text = self.player_nation.authority
         self.treasury.text = self.player_nation.treasury
+
+    def on_daily_update(self):
+        self.date.text = self.game_model.calendar.__str__()
+
+
+class BaseCelestialLabel:
+    def __init__(self, body, camera):
+        self.body = body
+        self.camera = camera
+        self.text = arcade.Text(
+            text=body.name,
+            x=0,
+            y=0,
+            color=arcade.color.WHITE,
+            font_size=24,
+            anchor_x="center"
+        )
+
+    def update(self):
+        screen_pos = self.camera.project((self.body.x, self.body.y))
+        self.text.x = screen_pos.x
+        self.text.y = screen_pos.y - 40
+
+    def draw(self):
+        self.text.draw()
+
+
+class GalaxyStarLabel:
+    def __init__(self, body):
+        self.body = body
+        self.text = arcade.Text(
+            text=body.name,
+            x=body.x,
+            y=body.y - 40,
+            color=(180, 180, 180, 180),
+            font_size=24,
+            anchor_x="center"
+        )
+
+    def draw(self):
+        self.text.draw()
+
+class PlanetLabel:
+    def __init__(self, body):
+        self.body = body
+        position = body.get_position()
+        self.text = arcade.Text(
+            text=body.name,
+            x=position[0],
+            y=position[1] - 40,
+            color=(180, 180, 180, 180),
+            font_size=24,
+            anchor_x="center"
+        )
+        
+    def draw(self):
+        self.text.draw()

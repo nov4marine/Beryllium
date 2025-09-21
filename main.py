@@ -12,6 +12,8 @@ class MyGame:
     def __init__(self):
         self.game_model = GameModel()  # Central simulation
 
+        calendar = self.game_model.calendar
+
         self.width = 1920
         self.height = 1080
         self.title = "Beryllium"
@@ -22,15 +24,19 @@ class MyGame:
         )
 
         # Window Components
-        self.window.calendar = Calendar()
+        self.window.calendar = calendar
         self.window.asset_manager = AssetManager()
-        self.window.persistent_ui = PersistentUI(self.game_model, self.game_model.player_nation)
+        self.window.persistent_ui = PersistentUI(self.game_model)
+
+        calendar.add_daily_observer(self.window.persistent_ui)
+        calendar.add_monthly_observer(self.window.persistent_ui)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()
+        self.window.persistent_ui.player_nation = self.game_model.player_nation
         self.galaxy_view = GalaxyView(game_model=self.game_model)
         self.main_menu_view = None
-
+        
         self.window.show_view(self.galaxy_view)
 
 

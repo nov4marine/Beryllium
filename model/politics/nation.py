@@ -41,3 +41,13 @@ class Nation:
 
     def colonize(self, planet):
         planet.colony = Colony(planet, self, planet.name)
+
+    def on_monthly_update(self):
+        """The monthly update loop for the nation."""
+        pass
+        self.update_economy()
+        self.gdp_per_capita = self.gdp / self.population if self.population > 0 else 0
+
+    def on_daily_update(self):
+        """The daily update loop for the nation."""
+        pass
