@@ -36,8 +36,10 @@ class Nation:
             self.capital.setup_capital()
 
     def update_economy(self):
-        for colony in self.planets:
-            colony.run_local_economy()
+        for planet in self.planets:
+            if planet.colony is not None:
+                colony = planet.colony
+                colony.run_local_economy()
 
     def colonize(self, planet):
         planet.colony = Colony(planet, self, planet.name)

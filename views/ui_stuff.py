@@ -4,6 +4,7 @@ from views.UI_stuff.planet_menu import PlanetInterface
 
 
 class PersistentUI:
+    """Baiscally the primary GUI that is always on screen, or has elements that persist across views"""
     def __init__(self, game_model):
         self.game_model = game_model
         self.manager = arcade.gui.UIManager()
@@ -74,27 +75,17 @@ class PersistentUI:
     def on_daily_update(self):
         self.date.text = self.game_model.calendar.__str__()
 
-
-class BaseCelestialLabel:
-    def __init__(self, body, camera):
-        self.body = body
-        self.camera = camera
-        self.text = arcade.Text(
-            text=body.name,
-            x=0,
-            y=0,
-            color=arcade.color.WHITE,
-            font_size=24,
-            anchor_x="center"
-        )
-
-    def update(self):
-        screen_pos = self.camera.project((self.body.x, self.body.y))
-        self.text.x = screen_pos.x
-        self.text.y = screen_pos.y - 40
-
-    def draw(self):
-        self.text.draw()
+    def show_planet_menu(self, colony):
+        # Close any existing planet menu
+        if hasattr(self, 'planet_menu') and self.planet_menu:
+            self.planet_menu.manager.disable()
+            self.planet_menu = None
+        # Create and show a new planet menu
+        self.planet_menu = PlanetInterface(self.game_model, self.player_nation)
+        self.planet_menu.set_planet(colony)
+        self.planet_menu.manager.enable()
+        # Optionally, add to self.manager if you want it to be drawn with the rest of the UI
+        # self.manager.add(self.planet_menu.window)
 
 
 class GalaxyStarLabel:

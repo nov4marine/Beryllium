@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from views.ui_stuff import PersistentUI, BaseCelestialLabel, PlanetLabel
+from views.ui_stuff import PersistentUI, PlanetLabel
 
 
 class SolarSystemView(arcade.View):
@@ -182,10 +182,20 @@ class SolarSystemView(arcade.View):
         pass
 
     def on_mouse_press(self, x, y, button, key_modifiers):
-        """
-        Called when the user presses a mouse button.
-        """
-        pass
+        # Convert screen to world coordinates
+        world_pos = self.map_camera.unproject((x, y))
+        world_x = world_pos.x
+        world_y = world_pos.y
+
+        # Check if a planet was clicked
+        for sprite in self.celestial_bodies:
+            # Only open menu for planets (not stars, asteroids, etc.)
+            body = sprite.model_reference
+            if hasattr(body, 'colony') and body.colony:
+                if sprite.collides_with_point((world_x, world_y)):
+                    print(f"Clicked on planet: {body.name}")
+                    self.persistent_ui.show_planet_menu(body.colony)
+                    return
 
     def on_mouse_release(self, x, y, button, key_modifiers):
         """

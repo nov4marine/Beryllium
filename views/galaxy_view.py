@@ -1,7 +1,7 @@
 import arcade
 import arcade.gui
 from views.solar_system_view import SolarSystemView
-from views.ui_stuff import BaseCelestialLabel, GalaxyStarLabel
+from views.ui_stuff import GalaxyStarLabel
 
 from scipy.spatial import Voronoi
 
@@ -35,21 +35,19 @@ class GalaxyView(arcade.View):
         self.fleet_sprites = arcade.SpriteList()
         self.fleet_clickboxes = arcade.SpriteList()
 
-        self.star_lablels = []
-
         self.hyperlane_visuals = []
+        self.star_labels = []
 
         # Cameras
         self.map_camera = arcade.camera.Camera2D()
         self.hud_camera = arcade.camera.Camera2D()
+        self.world_ui_manager.camera = self.map_camera
 
         # Variables to track WASD for panning
         self.pan_left = False
         self.pan_right = False
         self.pan_up = False
         self.pan_down = False
-
-        self.background_color = arcade.color.SMOKY_BLACK
 
         self.setup()
 
@@ -89,11 +87,11 @@ class GalaxyView(arcade.View):
         # --- Map Overlays ---
         self.maps["sovereignty"].calculate_galaxy_map()
 
+        # Prepare world-anchored star label data (not UI widgets)
         self.star_labels = []
         for star_model in self.galaxy.galaxy_stars:
             label = GalaxyStarLabel(star_model)
             self.star_labels.append(label)
-
 
     def pan_map_camera(self, delta_time):
         pan_speed = 100
@@ -112,21 +110,18 @@ class GalaxyView(arcade.View):
             new_x += pan_speed
 
         self.map_camera.position = (new_x, new_y)
-        #self.hud_camera.position = self.map_camera.position
 
     def on_draw(self):
         self.clear()
         # --- Galaxy Background ---
-        background_rect = arcade.LBWH(
+        arcade.draw.draw_texture_rect(
+            texture=self.galaxy_map_background,
+            rect=arcade.LBWH(
             left=0,
             bottom=0,
             width=self.window.width,
-            height=self.window.height,
-        )
-        arcade.draw.draw_texture_rect(
-            texture=self.galaxy_map_background,
-            rect=background_rect,
-        )
+            height=self.window.height
+        ))
 
         self.map_camera.use()  # Map camera to draw all game world elements
         camera_zoom = self.map_camera.zoom
@@ -164,10 +159,11 @@ class GalaxyView(arcade.View):
 
         # --- Everything above this line is background stuff that should not be occluded by active elements ---
 
-        # --- Star Details ---
-        if camera_zoom > 0.5:  # Adjust threshold as needed
+        # --- World-Anchored Labels (drawn manually, not UI widgets) ---
+        if camera_zoom > 0.5:  # Only show labels when zoomed in
             for label in self.star_labels:
                 label.draw()
+            
 
         # --- Selection Highlight ---
         if self.selected_sprite:
@@ -180,8 +176,7 @@ class GalaxyView(arcade.View):
             )
 
         # --- Static UI Elements ---
-        self.hud_camera.use()  # HUD camera to draw all UI elements
-
+        self.hud_camera.use()  # Switch to a camera that doesn't move
         self.world_ui_manager.draw()
         self.persistent_ui.draw()
 
