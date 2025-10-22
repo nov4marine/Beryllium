@@ -38,7 +38,7 @@ class Calendar:
             self.time_since_last_update -= self.time_per_game_day
 
     def __str__(self):
-        return f"{self.day}.{self.month}.{self.year}"
+        return f"{self.year}.{self.month}.{self.day}"
     
     def add_daily_observer(self, observer):
         if observer not in self.daily_observers:

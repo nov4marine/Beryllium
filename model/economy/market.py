@@ -40,6 +40,31 @@ class Market:
             raise ValueError(f"Good '{name}' not found in market.")
         good.supply += quantity
         return good.current_price * quantity
+    
+    def _setup_default_goods(self):
+        # Basic Goods
+        self.add_good(Good(name="Food", category="Basic", base_price=20))
+        self.add_good(Good(name="Energy", category="Basic", base_price=20))
+        self.add_good(Good(name="Minerals", category="Basic", base_price=30))
+        # Manufactured Goods
+        self.add_good(Good(name="Alloys", category="Manufactured", base_price=100))
+        self.add_good(Good(name="Consumer Goods", category="Manufactured", base_price=50))
+        self.add_good(Good(name="Robotics", category="Manufactured", base_price=160))
+        # Luxury Goods
+        self.add_good(Good(name="Luxury Goods", category="Luxury", base_price=200))
+        # Government
+        self.add_good(Good(name="Unity", category="Government", base_price=55))
+        # Services
+        self.add_good(Good(name="Amenities", category="Services", base_price=17))
+        self.add_good(Good(name="Healthcare", category="Services", base_price=30))
+        # Strategic Resources
+        self.add_good(Good(name="Strategic Resources", category="Strategic", base_price=210))
+
+    # Goods should have tiers within each category that represent value or how advanced they are.
+    # Eg. cheap/basic - standard/middle - luxury/advanced
+
+    # Goods could be categorized based on applications: Foods, consumer goods, tools, services, 
+    # Housing, Education(?), Healthcare, Entertainment, energy(?), leisure, transportation etc.
 
 
 class Good:

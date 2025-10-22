@@ -26,7 +26,7 @@ class MyGame:
         # Window Components
         self.window.calendar = calendar
         self.window.asset_manager = AssetManager()
-        self.window.persistent_ui = PersistentUI(self.game_model)
+        self.window.persistent_ui = PersistentUI(self.game_model, self.window.asset_manager)
 
         calendar.add_daily_observer(self.window.persistent_ui)
         calendar.add_monthly_observer(self.window.persistent_ui)

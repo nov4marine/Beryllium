@@ -1,12 +1,191 @@
 import arcade
 import arcade.gui
 
+class GenericMenu:
+    """
+    A generic menu window with a title bar and close button. Content area to be filled by subclasses.
+    To use, subclass and override setup_content() to populate the content_frame.
+    Ensure to call open_window() to show the menu and enable the manager. Then call draw() in your view's draw() method,
+    and update() in your view's on_update() method (or once monthly/daily if preferred).
+    """
+    # This should always exist in the view or persistent UI, and is activated when needed, which opens the window
+    # with the relavant object updating the content.
+    def __init__(self, model, asset_manager=None):
+        self.model = model
+        self.manager = arcade.gui.UIManager()
+        self.asset_manager = asset_manager
+
+        self.root = arcade.gui.UIAnchorLayout()
+        self.manager.add(self.root)
+        self.window = arcade.gui.UIAnchorLayout(size_hint=(0.7, 0.7))
+        self.window.with_background(color=arcade.color.DARK_SLATE_GRAY) # Can probably delete this
+        self.root.add(self.window)
+
+        self.top_bar = arcade.gui.UIAnchorLayout(size_hint=(1, 0.08))
+        self.top_bar.with_background(color=arcade.color.DARK_BLUE_GRAY)
+        self.title_label = arcade.gui.UILabel(text="Menu Title", font_size=18)
+        self.close_button = arcade.gui.UIFlatButton(text="X", size_hint=(0.08, 0.8))
+        self.close_button.on_click = self.close_window
+
+        self.top_bar.add(self.title_label, anchor_x="center")
+        self.top_bar.add(self.close_button, anchor_x="right")
+        self.window.add(self.top_bar, anchor_y="top")
+
+        self.content_frame = arcade.gui.UIAnchorLayout(size_hint=(1, 0.92))
+        self.content_frame.with_background(color=arcade.color.LIGHT_GRAY)
+        self.window.add(self.content_frame, anchor_y="bottom")
+        self.setup_content() # Populate content_frame
+    
+    def setup_content(self):
+        """
+        To be overridden by subclasses to populate content_frame. Does nothing on its own.
+        Add widgets/layouts to self.content_frame here, which is an anchor layout filling most of the window.
+        """
+        pass
+
+    def draw(self):
+        if self.manager._enabled:
+            self.manager.draw()
+
+    def update(self):
+        pass
+
+    def open_window(self):
+        self.manager.enable()
+
+    def close_window(self, event=None):
+        # Hide or destroy the menu (implementation depends on your view system)
+        self.manager.disable()
+        # Optionally: remove from parent, or set a flag
+        # You can expand this as needed
+        pass
+
+
+class PlanetMenu(GenericMenu):
+    """
+    A menu window for displaying and managing a planet/colony.
+    Inherits from GenericMenu. Overrides setup_content() to create tabs and content areas.
+    Call set_planet(colony) to set the current colony to display.
+    All content must be added to the content_frame defined in GenericMenu. (and probably cleared first)
+    """
+    def __init__(self, model, asset_manager):
+        super().__init__(model, asset_manager)
+        self.planet = None  # Will be set to a Colony
+        self.nation = None # Does nothing for now, but could be useful
+        self.asset_manager = asset_manager
+
+        self.current_tab = None
+
+    def open_window(self, colony):
+        self.planet = colony
+        self.title_label.text = getattr(colony, 'name', 'Planet')
+        self.show_summary_tab()
+        self.manager.enable()
+
+    def show_summary_tab(self):
+        self.content_frame.clear() # Clear previous content
+        grid = arcade.gui.UIGridLayout(size_hint=(1, 1), row_count=3, column_count=4,)
+        grid.with_background(color=arcade.color.CHARCOAL)
+        
+        # --- Box 1 --- Primary planet art and info with governor portrait and name
+        box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Primary planet art and info
+        box1.with_border()
+        grid.add(box1, row=0, column=0, column_span=3)
+
+        stats_box = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.1), space_between=50) # Key stats
+        stats_box.with_padding(all=10)
+        self.gdp_label = arcade.gui.UILabel(text=f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}")
+        self.population_label = arcade.gui.UILabel(text=f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}")
+        self.stability_label = arcade.gui.UILabel(text=f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}")
+        self.unemployment_label = arcade.gui.UILabel(text=f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%")
+
+        stats_box.add(self.gdp_label)
+        stats_box.add(self.population_label)
+        stats_box.add(self.stability_label)
+        stats_box.add(self.unemployment_label)
+        box1.add(stats_box, anchor_y="bottom")
+
+        # --- Box 2 --- Buildings overview
+        box2 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Buildings overview
+        box2.with_border()
+        grid.add(box2, row=1, column=0, column_span=2, row_span=2)
+
+        urban_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5)) # Urban buildings
+        urban_box.with_border()
+        urban_label = arcade.gui.UILabel(text="Urban Buildings")
+        urban_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9))
+        if self.planet and self.planet.buildings:
+            for building in self.planet.buildings:
+                #urban_buildings.add(arcade.gui.UILabel(text=f"{building.name} (Level {building.levels})")) # Will probably be subclassed to comprise a complex widget
+                pass
+        urban_box.add(urban_label, anchor_y="top")
+        urban_box.add(urban_buildings, anchor_y="bottom")
+        box2.add(urban_box, anchor_y="top")
+
+        rural_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5)) # Rural buildings
+        rural_box.with_border()
+        rural_label = arcade.gui.UILabel(text="Rural Buildings")
+        rural_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9))
+        if self.planet and self.planet.buildings:
+            for building in self.planet.buildings:
+                #rural_buildings.add(arcade.gui.UILabel(text=f"{building.name} (Level {building.levels})")) # Will probably be subclassed to comprise a complex widget
+                pass
+        rural_box.add(rural_label, anchor_y="top")
+        rural_box.add(rural_buildings, anchor_y="bottom")
+        box2.add(rural_box, anchor_y="bottom")
+
+        # --- Box 3 --- Celestial body info
+        box3 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # celestial body info
+        box3.with_border()
+        grid.add(box3, row=0, column=3)
+
+        planet_info = arcade.gui.UIBoxLayout(vertical=True, size_hint=(0.5, 1))
+        planet_label = arcade.gui.UILabel(text="Planet Summary")
+        climate_label = arcade.gui.UILabel(text="Climate: TBD")
+        habitability_label = arcade.gui.UILabel(text="Habitability: TBD")
+
+        planet_info.add(planet_label)
+        planet_info.add(climate_label)
+        planet_info.add(habitability_label)
+        box3.add(planet_info, anchor_x="left")
+
+        planet_sprite_box = arcade.gui.UIAnchorLayout(size_hint=(0.5, 1))
+        #planet_sprite = PlanetSprite() # Placeholder for a sprite or image widget
+        #planet_sprite_box.add(planet_sprite)
+        box3.add(planet_sprite_box, anchor_x="right")
+
+        # --- Box 4 --- Local market info
+        box4 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Local market info
+        box4.with_border()
+        grid.add(box4, row=1, column=2, row_span=2)
+
+        market_label = arcade.gui.UILabel(text="Local Market")
+        box4.add(market_label, anchor_y="top")
+
+        # --- Box 5 --- Build queue
+        box5 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Build queue
+        box5.with_border()
+        grid.add(box5, row=1, column=3, row_span=2)
+
+        build_queue_label = arcade.gui.UILabel(text="Build Queue")
+        box5.add(build_queue_label, anchor_y="top")
+
+        self.content_frame.add(grid)
+
+    def update(self):
+        if self.current_tab == "Summary":
+            self.gdp_label.text = f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}"
+            self.population_label.text = f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}"
+            self.stability_label.text = f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}"
+            self.unemployment_label.text = f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
+              
+        
 
 class PlanetInterface:
-    def __init__(self, model, nation):
+    def __init__(self, model):
         self.model = model
         self.planet = None  # Will be set to a Colony
-        self.nation = nation
+        self.nation = None
         self.manager = arcade.gui.UIManager()
         self.current_tab = "Summary"
 
@@ -114,8 +293,22 @@ class PlanetInterface:
         self.planet_label.text = getattr(colony, 'name', 'Planet')
         self.planet_type_label.text = getattr(getattr(colony, 'planet', None), 'type', 'Type')
         self.current_tab = "Summary"
+        self.manager.enable()
         self.update_content()
 
-    def on_draw(self):
-        self.manager.draw()
+    def draw(self):
+        if self.manager._enabled:
+            self.manager.draw()
 
+class BuildingWidget(arcade.gui.UIAnchorLayout):
+    def __init__(self, building):
+        super().__init__(size_hint=(1, 0.1))
+        self.building = building
+        self.with_border()
+        layout = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 1), space_between=10)
+        name_label = arcade.gui.UILabel(text=building.name, font_size=14)
+        building_icon = arcade.gui.UIImage(texture=building.icon_texture, width=32, height=32)
+        level_label = arcade.gui.UILabel(text=f"Level: {building.levels}", font_size=12)
+        layout.add(name_label)
+        layout.add(level_label)
+        self.add(layout)
