@@ -41,8 +41,26 @@ class GameModel:
 
         # --- Deploy nations ---
         self.galaxy.deploy_nations(self.nations)
-        for nation in self.nations:
-            nation.initialize_nation()
+        #for nation in self.nations:
+            #nation.initialize_nation()
+    
+    def initialize_new_game2(self):
+        """TODO: A simplified new game initialization for testing purposes,
+        and to serve as a template for future refactoring. Currently unused"""
+        # 1. Pick a random unowned solar system
+        system = self.galaxy.pick_unowned_system()
+        # 2. Pick a planet in that system
+        planet = system.pick_homeworld_candidate()
+        # 3. Create the player nation
+        nation = Nation("Player Nation")
+        # 4. Assign the planet as the capital
+        nation.setup_capital(planet)
+        # 5. Mark system and planet as owned
+        system.owner = nation
+        planet.owner = nation
+        # 6. Add to model
+        self.player_nation = nation
+        self.galaxy.nations.append(nation)
 
     def on_monthly_update(self):
         """The monthly update loop for the game model."""

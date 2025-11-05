@@ -118,6 +118,13 @@ class Building:
         self.profit = 0
         self.ownership = {"total": 0, "private": 0, "government": 0, "workers": 0}
 
+        self.productivity = 0
+
+        self.balance_sheet = {
+            "revenue": {},
+            "expenses": {},
+        }
+
     def add_level(self, funder):
         """Add a level of the building, owned by the funder"""
         self.levels += 1
@@ -134,6 +141,7 @@ class Building:
         self.process_goods()
         self.pay_workers()
         self.allocate_profit()
+        self.calculate_productivity()
 
     def process_goods(self):
         job_staffing = []
@@ -143,23 +151,34 @@ class Building:
 
         total_staffing = sum(job_staffing) / len(job_staffing)
 
+        expenses = 0
+        revenue = 0
         for good, quantity in self.inputs.items():
             total_inputs = quantity * total_staffing * self.levels
-            self.expenses += self.colony.local_market.buy_good(good, total_inputs)
+            expenses += self.colony.local_market.buy_good(good, total_inputs)
+            self.balance_sheet["expenses"][good] = expenses
+            self.expenses += expenses
 
         for good, quantity in self.outputs.items():
             total_outputs = quantity * total_staffing * self.levels
-            self.revenue += self.colony.local_market.sell_good(good, total_outputs)
+            revenue += self.colony.local_market.sell_good(good, total_outputs)
+            self.balance_sheet["revenue"][good] = revenue
+            self.revenue += revenue
 
     def pay_workers(self):
         for job in self.jobs:
+            self.balance_sheet["expenses"]["wages"] = (job.wage * job.employees)
             self.expenses += (job.wage * job.employees)
 
     def allocate_profit(self):
         self.profit = self.revenue - self.expenses
         if self.profit >= 0:
             dividends = self.profit
-            pass
+            pass      
+
+    def calculate_productivity(self):
+        total_employees = sum(job.employees for job in self.jobs)
+        self.productivity = (self.profit + self.balance_sheet["expenses"].get("wages", 0)) / total_employees if total_employees > 0 else 0
 
 
 class Job:
@@ -221,24 +240,100 @@ class Pop:
 
     def calculate_needs(self):
         """
-        Calculate needs for a pop of POP_UNIT_SIZE, then scale when fulfilling needs.
+        Calculate needs for a pop of POP_UNIT_SIZE (current default 10,000), then scale when fulfilling needs.
         This makes balancing easier and matches Victoria 3's approach.
         """
-        base_size = self.POP_UNIT_SIZE
         # Needs for a standard pop unit
         consumption = {
             # Core sustenance needs. Diminishing growth
-            "Food": 5 + (self.wealth * 0.08) ** 0.3,  # Base food need with a wealth factor
-            "Consumer Goods": 2 + (self.wealth * 0.05) ** 0.5,  # Base clothing and other durable goods need with a wealth factor
-            "Housing": 3 + (self.wealth * 0.06) ** 0.7,  # Base housing need with a wealth factor
+            "Food": 15 + (self.wealth * 0.15) ** 0.3,  # Base food need with a wealth factor
+            "Consumer Goods": 20 + (self.wealth * 0.5) ** 0.8,  # Base clothing and other durable goods need with a wealth factor
+            "Housing": 30 + (self.wealth * 0.3) ** 0.7,  # Base housing need with a wealth factor
             # Quality of life needs. Linear-ish growth
-            "Consumer Goods": max(0, (self.wealth - 50) * 0.02),  # Consumer goods increases linearly
+            "Consumer Goods": (self.wealth * 0.3) * 0.8,  # Consumer goods increases linearly
             "Services": 1 + (self.wealth * 0.015) ** 1.05,
-            "Amenities": max(0, (self.wealth - 80) * 0.012) ** 1.1,
+            "Amenities": (self.wealth * 0.1) ** 1.5,
+            "Healthcare": 1 + (self.wealth * 0.1) ** 0.8,
             # Luxury needs. exponential growth
             # high quality services, amenities, transportation, clothing, food, housing, etc.
-            "Luxury Goods": max(0, int(self.wealth * 0.1)),
+            "Transportation": (self.wealth * 0.15) ** 1.3,
+            "Luxury Goods": (self.wealth * 0.15) ** 1.5,
         }
+        self.needs = consumption
+
+    def calculate_needs2(self):
+        """
+        TODO: Alternative, more complex needs calculation using utility functions.
+        This method is not currently used but serves as a placeholder for future enhancements.
+
+        Non-linear demand system: 
+        Ci = N + (a * (W ** b)) * (Pb / Pi) ** ei
+        Where:
+        Ci = Consumption of good i
+        N = Base need for good i
+        a = Scaling factor for wealth impact
+        W = Wealth of the pop
+        b = elasticity exponent, 
+        determining whether the good is necessity (b < 1), normal (b = 1), luxury (b > 1),
+        or inferior (b < 0).
+        Pb = Base price of good i
+        Pi = Actual price of good i
+        ei = Price elasticity of demand for good i,
+        0 < ei < 1 for necessities, ei > 1 for luxuries
+
+        Total Consumption = Base Need + Wealth Effect * Price Effect
+
+        Total spending power formula:
+        X = s * income + (1 - s) * wealth
+        Where:
+        X = total spending power
+        s = modifier for income vs wealth influence (0 < s < 1) where,
+        higher t means income has more influence
+        income = after tax and transfer income. Also after savings/reinvestment
+        (so income = gross income - taxes + transfers - savings)
+        wealth = accumulated wealth/savings
+
+        Structural Savings Formula:
+        S = Smin + (Smax - Smin) * (popwealth/wealth benchmark)
+        Where:
+        S = structural savings rate (portion of income saved, not spent)
+        popwealth = wealth of the pop
+        wealth benchmark = benchmark wealth level for max savings rate
+        Smin = minimum savings rate (for low wealth pops) = 0.05
+        Smax = maximum savings rate (for high wealth pops) = 0.30
+
+        --- Capital Market ---
+        cost of capital / interest rate formula:
+        interest rate = base_rate * (target_pool_size / actual_pool size) ** p
+        Where:
+        base_rate = baseline interest rate set by central bank = 0.05 (5%)
+        target_pool_size = desired size of capital pool expressed as a percentage of GDP = 0.1 (10%)
+        actual_pool_size = current size of capital pool expressed as a percentage of GDP
+        p = sensitivity exponent = 0.5
+
+        expected rate of return on investment formula:
+        expected_return = expected monthly profit of construction / construction cost
+
+        decision to invest if: expected_return > interest_rate + risk_premium (2 or 3%)
+
+
+        # --- PARAMETER DEFINITION (Place this in a separate file or class variable) ---
+        NEEDS_PARAMETERS = {
+        # Good: [Base, Scaling Factor (alpha), Elasticity Exponent (beta)]
+        "Food":             [15.0, 0.30, 0.8],  # Necessity (beta < 1)
+        "Housing":          [30.0, 0.30, 0.7],  # Strong Necessity
+        "Consumer Goods":   [20.0, 0.30, 0.8],  # Base necessity component
+        "Services":         [1.0,  0.015, 1.05], # Normal Good (beta ~ 1)
+        "Amenities":        [1.0,  0.10, 1.5],  # Luxury (beta > 1)
+        "Healthcare":       [1.0,  0.10, 0.8],  # Necessity
+        "Transportation":   [0.0,  0.15, 1.3],  # Luxury (No base need)
+        "Luxury Goods":     [0.0,  0.15, 1.5],  # Strong Luxury (No base need)
+        }
+        """
+        consumption = {}
+        for good, params in NEEDS_PARAMETERS.items():
+            base_need, alpha, beta = params
+            consumption[good] = base_need + (alpha * (self.wealth ** beta))
         self.needs = consumption
 
     def fulfill_needs(self, market):

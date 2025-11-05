@@ -158,6 +158,7 @@ class SolarSystem:
         Assigns a random SolarSystem and planet as the nation's homeworld.
         Modifies the planet to be habitable and sets its properties.
         Returns (planet, system_name).
+        currently deprecated in favor of SolarSystem.assign_capital
         """
         # Pick a random SolarSystem that is not already owned
         unowned_systems = [s for s in galaxy.solar_systems.values() if s.owner is None]

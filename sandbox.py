@@ -1,117 +1,79 @@
-import arcade
-from views.UI_stuff.planet_menu import PlanetMenu
-from model.assets import AssetManager
+class Pop:
+    # Standard pop size for which needs are defined (like Victoria 3's 10,000)
+    POP_UNIT_SIZE = 10_000
 
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
-WINDOW_TITLE = "Starting Template"
+    def __init__(self, colony, size, current_job=None):
+        self.colony = colony
+        self.size = size
+        self.current_job = current_job
 
+        self.wage = current_job.wage if current_job else 10
+        self.wealth = 1.0
+        self.needs = {}
 
-class GameView(arcade.View):
-    """
-    Main application class.
-
-    NOTE: Go ahead and delete the methods you don't need.
-    If you do need a method, delete the 'pass' and replace it
-    with your own code. Don't leave 'pass' in this program.
-    """
-
-    def __init__(self):
-        super().__init__()
-        asset_manager = AssetManager()
-
-        self.background_color = arcade.color.AMAZON
-
-        colony = Colony()
-        self.menu = PlanetMenu("model placeholder", asset_manager)
-        self.menu.open_window(colony)
-
-        # If you have sprite lists, you should create them here,
-        # and set them to None
-
-    def reset(self):
-        """Reset the game to the initial state."""
-        # Do changes needed to restart the game here if you want to support that
+    def update(self):
         pass
+        self.calculate_needs()
+        self.fulfill_needs(self.colony.local_market)
+        self.evaluate_job_market(self.colony.job_offers)
 
-    def on_draw(self):
+    def calculate_needs(self):
         """
-        Render the screen.
+        Calculate needs for a pop of POP_UNIT_SIZE, then scale when fulfilling needs.
+        This makes balancing easier and matches Victoria 3's approach.
         """
+        base_size = self.POP_UNIT_SIZE
+        # Needs for a standard pop unit
+        consumption = {
+            # Core sustenance needs. Diminishing growth
+            "Food": 5 + (self.wealth * 0.5) ** 0.3,  # Base food need with a wealth factor
+            "Consumer Goods": 2 + (self.wealth * 0.5) ** 0.5,  # Base clothing and other durable goods need with a wealth factor
+            "Housing": 3 + (self.wealth * 1) ** 1,  # Base housing need with a wealth factor
+            # Quality of life needs. Linear-ish growth
+            "Consumer Goods": max(0, (self.wealth * 0.5) * 1),  # Consumer goods increases linearly
+            "Services": 1 + (self.wealth * 0.15) ** 1.5,
+            "Amenities": self.wealth * 0.012 ** 1.5,
+            # Luxury needs. exponential growth
+            # high quality services, amenities, transportation, clothing, food, housing, etc.
+            "Luxury Goods": max(0, int(self.wealth - 15) ** 2),  # Luxury goods need grows exponentially with wealth
+        }
+        self.needs = consumption
 
-        # This command should happen before we start drawing. It will clear
-        # the screen to the background color, and erase what we drew last frame.
-        self.clear()
-        self.menu.draw()
+    def fulfill_needs(self, market):
+        # Scale needs by (actual size / pop unit size)
+        scale = self.size / self.POP_UNIT_SIZE
+        for good, quantity in self.needs.items():
+            market.buy_good(good, quantity * scale)
 
-        # Call draw() on all your sprite lists below
+    def evaluate_job_market(self, job_board):
+        """Looks for a job and 'applies' if it meets criteria."""
+        application_pool = []
 
-    def on_update(self, delta_time):
+        # Simple wage-based evaluation
+        for job_offer in job_board:
+            # Check if wage is significantly higher
+            if job_offer["wage"] > self.wage * 1.2:
+                application_pool.append({
+                    "pop_group": self,
+                    "quantity_applying": self.size,
+                    "job_offer": job_offer
+                })
+
+        return application_pool
+
+    def split(self, amount):
         """
-        All the logic to move, and the game logic goes here.
-        Normally, you'll call update() on the sprite lists that
-        need it.
+        Splits 'amount' individuals from this pop and returns a new Pop instance.
+        The current pop's size is reduced by 'amount'.
         """
-        pass
-
-    def on_key_press(self, key, key_modifiers):
-        """
-        Called whenever a key on the keyboard is pressed.
-
-        For a full list of keys, see:
-        https://api.arcade.academy/en/latest/arcade.key.html
-        """
-        pass
-
-    def on_key_release(self, key, key_modifiers):
-        """
-        Called whenever the user lets off a previously pressed key.
-        """
-        pass
-
-    def on_mouse_motion(self, x, y, delta_x, delta_y):
-        """
-        Called whenever the mouse moves.
-        """
-        pass
-
-    def on_mouse_press(self, x, y, button, key_modifiers):
-        """
-        Called when the user presses a mouse button.
-        """
-        pass
-
-    def on_mouse_release(self, x, y, button, key_modifiers):
-        """
-        Called when a user releases a mouse button.
-        """
-        pass
-
-class Colony:
-    def __init__(self):
-        self.name = "New Terra"
-        self.governor = "Governor Name"
-        self.unemployment = "5%"
-        self.planet_type = "Terrestrial"
-        self.population = "1,000,000"
-        self.buildings = ["Farm", "Factory", "School"]
-
-
-def main():
-    """ Main function """
-    # Create a window class. This is what actually shows up on screen
-    window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-
-    # Create and setup the GameView
-    game = GameView()
-
-    # Show GameView on screen
-    window.show_view(game)
-
-    # Start the arcade game loop
-    arcade.run()
-
-
-
-if __name__ == "__main__":
-    main()
+        if amount > self.size:
+            raise ValueError("Not enough individuals to split!")
+        self.size -= amount
+        new_pop = Pop(self.colony, amount)
+        new_pop.wealth = self.wealth
+        return new_pop
+    
+pop = Pop(colony=None, size=10_000)
+pop.wealth = 100
+pop.calculate_needs()
+print(pop.needs)  # Display calculated needs

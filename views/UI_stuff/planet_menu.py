@@ -10,8 +10,7 @@ class GenericMenu:
     """
     # This should always exist in the view or persistent UI, and is activated when needed, which opens the window
     # with the relavant object updating the content.
-    def __init__(self, model, asset_manager=None):
-        self.model = model
+    def __init__(self, asset_manager=None):
         self.manager = arcade.gui.UIManager()
         self.asset_manager = asset_manager
 
@@ -68,8 +67,8 @@ class PlanetMenu(GenericMenu):
     Call set_planet(colony) to set the current colony to display.
     All content must be added to the content_frame defined in GenericMenu. (and probably cleared first)
     """
-    def __init__(self, model, asset_manager):
-        super().__init__(model, asset_manager)
+    def __init__(self, asset_manager):
+        super().__init__(asset_manager)
         self.planet = None  # Will be set to a Colony
         self.nation = None # Does nothing for now, but could be useful
         self.asset_manager = asset_manager
@@ -119,8 +118,7 @@ class PlanetMenu(GenericMenu):
         urban_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9))
         if self.planet and self.planet.buildings:
             for building in self.planet.buildings:
-                #urban_buildings.add(arcade.gui.UILabel(text=f"{building.name} (Level {building.levels})")) # Will probably be subclassed to comprise a complex widget
-                pass
+                urban_buildings.add(BuildingWidget(building, self.asset_manager))
         urban_box.add(urban_label, anchor_y="top")
         urban_box.add(urban_buildings, anchor_y="bottom")
         box2.add(urban_box, anchor_y="top")
@@ -131,8 +129,7 @@ class PlanetMenu(GenericMenu):
         rural_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9))
         if self.planet and self.planet.buildings:
             for building in self.planet.buildings:
-                #rural_buildings.add(arcade.gui.UILabel(text=f"{building.name} (Level {building.levels})")) # Will probably be subclassed to comprise a complex widget
-                pass
+                rural_buildings.add(BuildingWidget(building, self.asset_manager))
         rural_box.add(rural_label, anchor_y="top")
         rural_box.add(rural_buildings, anchor_y="bottom")
         box2.add(rural_box, anchor_y="bottom")
@@ -303,14 +300,19 @@ class PlanetInterface:
             self.manager.draw()
 
 class BuildingWidget(arcade.gui.UIAnchorLayout):
-    def __init__(self, building):
-        super().__init__(size_hint=(1, 0.1))
+    def __init__(self, building, asset_manager):
+        super().__init__(width=20, height=20)
         self.building = building
+        self.assets = asset_manager
         self.with_border()
-        layout = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 1), space_between=10)
-        name_label = arcade.gui.UILabel(text=building.name, font_size=14)
-        building_icon = arcade.gui.UIImage(texture=building.icon_texture, width=32, height=32)
-        level_label = arcade.gui.UILabel(text=f"Level: {building.levels}", font_size=12)
-        layout.add(name_label)
-        layout.add(level_label)
-        self.add(layout)
+        #self.with_background(texture=self.assets.ui_icons.get('building_bg'))
+
+        #name_label = arcade.gui.UILabel(text=building.name)
+        level_label = arcade.gui.UILabel(text=f"Level: {building.levels}") # top left
+        productivity_label = arcade.gui.UILabel(text=f"Productivity: {building.productivity}") # top right
+        profit_label = arcade.gui.UILabel(text=f"Profit: {building.profit}") # bottom middle
+
+        #self.add(name_label, anchor_y="top", anchor_x="center")
+        self.add(level_label, anchor_y="top", anchor_x="left")
+        self.add(productivity_label, anchor_y="top", anchor_x="right")
+        self.add(profit_label, anchor_y="bottom", anchor_x="center")

@@ -35,6 +35,15 @@ class Nation:
             capital_colony = self.capital.colony
             self.capital = capital_colony
             self.capital.setup_capital()
+            self.colonies.append(self.capital)
+
+    def setup_capital(self, planet):
+        """TODO: Currently unsed template for future refactoring of capital setup logic."""
+        self.capital = planet
+        colony = Colony(planet, self, planet.name)
+        colony.setup_capital()
+        self.colonies.append(colony)
+        self.planets.append(planet)
 
     def update_economy(self):
         for planet in self.planets:

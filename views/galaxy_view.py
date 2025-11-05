@@ -3,6 +3,8 @@ import arcade.gui
 from views.solar_system_view import SolarSystemView
 from views.ui_stuff import GalaxyStarLabel
 
+from pyglet.graphics import Batch
+
 from scipy.spatial import Voronoi
 
 
@@ -37,11 +39,12 @@ class GalaxyView(arcade.View):
 
         self.hyperlane_visuals = []
         self.star_labels = []
+        self.star_label_sprites = arcade.SpriteList()
 
         # Cameras
         self.map_camera = arcade.camera.Camera2D()
         self.hud_camera = arcade.camera.Camera2D()
-        self.world_ui_manager.camera = self.map_camera
+        #self.world_ui_manager.camera = self.map_camera
 
         # Variables to track WASD for panning
         self.pan_left = False
@@ -88,9 +91,8 @@ class GalaxyView(arcade.View):
         self.maps["sovereignty"].calculate_galaxy_map()
 
         # Prepare world-anchored star label data (not UI widgets)
-        self.star_labels = []
         for star_model in self.galaxy.galaxy_stars:
-            label = GalaxyStarLabel(star_model)
+            label = GalaxyStarLabel(star_model, sprite_list=self.star_label_sprites)
             self.star_labels.append(label)
 
     def pan_map_camera(self, delta_time):
@@ -117,11 +119,12 @@ class GalaxyView(arcade.View):
         arcade.draw.draw_texture_rect(
             texture=self.galaxy_map_background,
             rect=arcade.LBWH(
-            left=0,
-            bottom=0,
-            width=self.window.width,
-            height=self.window.height
-        ))
+                left=0,
+                bottom=0,
+                width=self.window.width,
+                height=self.window.height,
+            )
+        )
 
         self.map_camera.use()  # Map camera to draw all game world elements
         camera_zoom = self.map_camera.zoom
@@ -158,12 +161,11 @@ class GalaxyView(arcade.View):
             clickbox.radius = clickbox.model_reference.radius * 2 / camera_zoom
 
         # --- Everything above this line is background stuff that should not be occluded by active elements ---
-
         # --- World-Anchored Labels (drawn manually, not UI widgets) ---
         if camera_zoom > 0.5:  # Only show labels when zoomed in
             for label in self.star_labels:
-                label.draw()
-            
+                label.update(camera_zoom)
+            self.star_label_sprites.draw()
 
         # --- Selection Highlight ---
         if self.selected_sprite:
