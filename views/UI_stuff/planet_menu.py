@@ -89,6 +89,9 @@ class PlanetMenu(GenericMenu):
         
         # --- Box 1 --- Primary planet art and info with governor portrait and name
         box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Primary planet art and info
+        climate = self.planet.planet.climate if self.planet and self.planet.planet else "not_implemented"
+        print(f"Planet climate for menu: {climate}")
+        #box1.with_background(texture=self.asset_manager.ui_art[climate])
         box1.with_border()
         grid.add(box1, row=0, column=0, column_span=3)
 
@@ -172,7 +175,7 @@ class PlanetMenu(GenericMenu):
 
         self.content_frame.add(grid)
 
-    def update(self):
+    def on_daily_update(self):
         if self.current_tab == "Summary":
             self.gdp_label.text = f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}"
             self.population_label.text = f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}"
@@ -180,7 +183,6 @@ class PlanetMenu(GenericMenu):
             self.unemployment_label.text = f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
               
         
-
 class PlanetInterface:
     def __init__(self, model):
         self.model = model

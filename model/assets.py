@@ -20,6 +20,8 @@ class AssetManager:
 
         self.sounds = {} # Sounds will almost certainly be broken up into categories later
         self.music = {} # Music will also be broken up into categories later
+
+        self.placeholder_image = self.ui_art["not_implemented"]
     
     def load_ui_art(self):
         """

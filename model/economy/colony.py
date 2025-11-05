@@ -92,8 +92,8 @@ class Colony:
         ]
 
         self.pops = [Pop(self, size=1200000)]  # 1.2 million initial population
-
-        print(f"Colony {self.name} initialized with {len(self.buildings)} buildings and population {self.total_population}.")
+        total_population = sum(pop.size for pop in self.pops)
+        print(f"Colony {self.name} initialized with {len(self.buildings)} buildings and population {total_population}.")
 
 
 class Building:

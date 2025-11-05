@@ -119,7 +119,8 @@ class SolarSystem:
         print(planet)
 
         # Set planet as habitable and assign properties
-        #planet.habitable = True
+        planet.type = "rocky"
+        # planet.habitable = True
         #planet.name = nation.homeworld["planet_name"]
         #planet.climate = nation.homeworld["climate"]
         #self.name = nation.homeworld["system_name"]
@@ -177,6 +178,7 @@ class SolarSystem:
 
         # Set planet as habitable and assign properties
         planet.habitable = True
+        planet.type = "rocky"
         planet.name = nation.homeworld["homeworld"]["planet"]
         planet.climate = nation.homeworld["homeworld"]["climate"]
         planet.color = (0, 255, 255)  # Optional: visually mark as habitable

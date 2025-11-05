@@ -76,6 +76,7 @@ class PersistentUI:
 
     def on_daily_update(self):
         self.date.text = self.game_model.calendar.__str__()
+        self.planet_menu.on_daily_update()
 
     def show_planet_menu(self, colony):
         self.planet_menu.open_window(colony)
