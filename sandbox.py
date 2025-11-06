@@ -39,6 +39,64 @@ class Pop:
         }
         self.needs = consumption
 
+        AVERAGE_WEALTH_NEEDS_PARAMETERS = {
+            # Average needs for average income/wealth levels
+        # Good: [Base (Subsistence), Scaling Factor (alpha), Wealth Elasticity Exponent (beta), Price Elasticity (ei) (1 for now)]
+        "Food":             [15.0, 0.30, 0.8],  # Necessity (beta < 1)
+        "Housing":          [30.0, 0.30, 1.0],  # Strong Necessity
+        "Consumer Goods":   [12.0, 0.30, 1.0],  # Base necessity component
+        "Services":         [8.0,  0.015, 1.1], # Normal Good (beta ~ 1)
+        "Education":        [2.0, 0.10, 0.7],  # Necessity
+        "Energy":           [6.0, 0.20, 0.8],  # Necessity
+        "Amenities":        [5,  0.10, 1.5],  # Luxury (beta > 1)
+        "Healthcare":       [10,  0.10, 0.8],  # Necessity
+        "Transportation":   [15,  0.15, 1.3],  # Luxury (No base need)
+        "Luxury Goods":     [0.0,  0.15, 1.5],  # Strong Luxury (No base need)
+        }
+
+        NEEDS_PARAMETERS = {
+            # Quantities this time, assuming base prices, rather than percentages
+            "Food": 0.75,
+            "Housing": 0.50,
+            "Consumer Goods": 0.30,
+            "Services": 0.40, 
+            "Education": 0.10,
+            "Energy": 0.30,
+            "Amenities": 0.30,
+            "Healthcare": 0.33,
+            "Transportation": 0.35,
+        }
+
+        # subsistence_wealth/income = roughly 10 assuming base prices
+
+        # Subsistence goods needed for basic survival in a Stellaris setting
+        Subsistence_needs = {
+            "Food": 4,
+            "Housing": 4,
+            "Consumer Goods": 1,
+            "Energy": 1,
+            "Healthcare": 1,
+        }
+
+        actual_needs_parameters = {
+        # Good: [Base (Subsistence), Scaling Factor (alpha), Wealth Elasticity Exponent (beta), Price Elasticity (ei) (1 for now)]
+            "Food": [4.0, 0.27, 0.8, 1.0],
+            "Housing": [4.0, 0.27, 1.0, 1.0],
+            "Consumer Goods": [1.0, 0.11, 1.0, 1.0],
+            "Services": [1.0, 0.04, 1.1, 1.0],
+            "Education": [0, 0.12, 0.7, 1.0],
+            "Energy": [1.0, 0.12, 0.8, 1.0],
+            "Amenities": [0, 0.02, 1.5, 1.0],
+            "Healthcare": [1.0, 0.22, 0.8, 1.0],
+            "Transportation": [0, 0.06, 1.2, 1.0],
+            "Luxury Goods": [0, 0.01, 1.5, 1.0],
+        }
+
+        # I'm just now realizing all these numbers are assuming all goods/services are priced at 1 equally
+        # Which I guess is fine since I accidentally used percentages of income anyway
+
+        # scaling_factor = (consumption - subsistence) / (wealth ** beta)
+
     def fulfill_needs(self, market):
         # Scale needs by (actual size / pop unit size)
         scale = self.size / self.POP_UNIT_SIZE

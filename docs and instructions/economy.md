@@ -16,6 +16,20 @@
 
         Total Consumption = Base Need + Wealth Effect * Price Effect
 
+        --- Revised since the above actually is ambiguous about whether consumption 
+        is expenditure on good or quantity of good ---
+
+        Subsistence expenditure Es = N * P
+        where N is quantity of goods, P is current price
+
+        Supernumerary expenditure Ew = (a * w) ** b * (Pb / Pi) ** ei
+        where a is slope, w is wealth, b is normal/inferior/superior good, 
+        Pb is base price, Pi is current price, ei is demand price elasticity
+
+        Quantity Demanded Qi = (Es + Ew) / Pi
+
+        Actual Quantity Demanded Qa = 
+
         Total spending power formula:
         X = s * income + (1 - s) * wealth
         Where:
