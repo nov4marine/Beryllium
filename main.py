@@ -20,8 +20,11 @@ class MyGame:
         self.window = arcade.Window(
             width=self.width,
             height=self.height,
-            title=self.title
+            title=self.title,
         )
+
+        print(f"Default texture atlas size: {self.window.ctx.default_atlas.width}x{self.window.ctx.default_atlas.height}")
+        self.window.ctx.default_atlas.resize((8192, 8192))
 
         # Window Components
         self.window.calendar = calendar

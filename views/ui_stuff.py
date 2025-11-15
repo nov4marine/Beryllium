@@ -1,6 +1,7 @@
 import arcade
 import arcade.gui
 from views.UI_stuff.planet_menu import PlanetMenu
+from views.UI_stuff.market_gui import MarketGUI
 
 
 class PersistentUI:
@@ -13,9 +14,12 @@ class PersistentUI:
         self.player_nation = None
 
         # --- Sub-Components ---
+        # all of these must be added to both draw and update
         self.planet_menu = PlanetMenu(self.asset_manager)
-        self.left_sidebar = LeftSideBar(self.manager, self.asset_manager)
+        self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
         self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
+        
+        self.market_gui = MarketGUI(self.asset_manager)
 
         # --- HUD ---
         self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
@@ -72,6 +76,7 @@ class PersistentUI:
     def draw(self):
         self.manager.draw()
         self.planet_menu.draw()
+        self.market_gui.draw()
 
     def on_monthly_update(self):
         self.gdp.text = f"GDP: {self.player_nation.gdp}"
@@ -90,13 +95,18 @@ class PersistentUI:
         self.date.text = self.game_model.calendar.__str__()
         self.planet_menu.on_daily_update()
         self.right_ledger.update(self.player_nation)
+        self.market_gui.on_daily_update()
 
     def show_planet_menu(self, colony):
         self.planet_menu.open_window(colony)
 
+    def show_market_gui(self):
+        self.market_gui.open_window(self.player_nation.national_market)
+
 class GalaxyStarLabel:
-    def __init__(self, body, sprite_list):
+    def __init__(self, body, text_sprite_list, bg_sprite_list):
         self.body = body
+        self.color = (arcade.color.DARK_GREEN)
         self.text = arcade.create_text_sprite(
             text=body.name,
         )
@@ -106,37 +116,74 @@ class GalaxyStarLabel:
         self.background = arcade.SpriteSolidColor(
             width=self.text.width + 10,
             height=self.text.height + 4,
-            color=arcade.color.STEEL_BLUE,
+            color=self.color,
             center_x=self.text.center_x,
             center_y=self.text.center_y,
         )
-        sprite_list.append(self.background)
-        sprite_list.append(self.text)
+        bg_sprite_list.append(self.background)
+        text_sprite_list.append(self.text)
 
     def update(self, camera_zoom):
         scale_factor = 1 / camera_zoom
-        self.text.scale = scale_factor
         self.background.scale = scale_factor
+        self.text.scale = scale_factor
 
-
-class PlanetLabel:
-    def __init__(self, body):
+class CelestialBodyLabel:
+    def __init__(self, body, spritelist):
         self.body = body
-        position = body.get_position()
+        self.color = (arcade.color.CHARCOAL)
         self.text = arcade.Text(
             text=body.name,
-            x=position[0],
-            y=position[1] - 40,
-            color=(180, 180, 180, 180),
-            font_size=24,
-            anchor_x="center"
+            #font_size=16,
+            x=0,
+            y=0,
         )
+        texture_size = (
+            int(self.text.content_width + 20), 
+            int(self.text.content_height + 10)
+        )
+        self.text.anchor_x = "center"
+        self.text.anchor_y = "center"
+        self.text.x = texture_size[0] / 2
+        self.text.y = texture_size[1] / 2 
+        self.texture = arcade.Texture.create_empty(body.name, size=texture_size)
         
-    def draw(self):
-        self.text.draw()
+        self.sprite = arcade.Sprite(
+            self.texture,
+            center_x=body.x,
+            center_y=body.y - 40,
+        )
+
+        spritelist.append(self.sprite)
+        with spritelist.atlas.render_into(self.texture) as fbo:
+            fbo.clear(color=self.color)
+            arcade.draw_lbwh_rectangle_outline(
+                left=0,
+                bottom=0,
+                width=texture_size[0],
+                height=texture_size[1],
+                color=arcade.color.WHITE,
+                border_width=4,
+            )
+            self.text.draw()
+
+    def update(self, camera_zoom):
+        scale_factor = 1 / camera_zoom
+        self.sprite.scale = scale_factor
+        self.sprite.center_y = self.body.y - (40 * scale_factor)
+
+
+class PlanetLabel(CelestialBodyLabel):
+    def __init__(self, body, spritelist):
+        self.body = body
+        position = body.get_position()
+        body.x = position[0]
+        body.y = position[1]
+        super().__init__(body, spritelist)
 
 class LeftSideBar:
-    def __init__(self, manager, asset_manager):
+    def __init__(self, persistent_ui, manager, asset_manager):
+        self.persistent_ui = persistent_ui
         self.manager = manager
         self.assets = asset_manager
         self.collapsed = True
@@ -145,6 +192,11 @@ class LeftSideBar:
         self.collapsed_panel.with_background(color=arcade.color.DARK_BLUE_GRAY)
         # add widgets to collapsed panel
         self.collapsed_button = arcade.gui.UIFlatButton(size_hint=(1, 1))
+
+        @self.collapsed_button.event("on_click")
+        def on_click_collapsed_button(event):
+            self.persistent_ui.show_market_gui()
+
         self.collapsed_panel.add(self.collapsed_button)
         self.root.add(self.collapsed_panel, anchor_x="left", anchor_y="center")
 

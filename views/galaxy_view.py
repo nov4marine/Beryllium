@@ -1,7 +1,7 @@
 import arcade
 import arcade.gui
 from views.solar_system_view import SolarSystemView
-from views.ui_stuff import GalaxyStarLabel
+from views.ui_stuff import GalaxyStarLabel, CelestialBodyLabel
 
 from pyglet.graphics import Batch
 
@@ -92,7 +92,7 @@ class GalaxyView(arcade.View):
 
         # Prepare world-anchored star label data (not UI widgets)
         for star_model in self.galaxy.galaxy_stars:
-            label = GalaxyStarLabel(star_model, sprite_list=self.star_label_sprites)
+            label = CelestialBodyLabel(star_model, spritelist=self.star_label_sprites)
             self.star_labels.append(label)
 
     def pan_map_camera(self, delta_time):
@@ -193,6 +193,7 @@ class GalaxyView(arcade.View):
 
         self.star_clickboxes.update(delta_time)
         self.star_sprites.update(delta_time)
+        self.star_label_sprites.update(delta_time)
         if self.selected_sprite in self.star_clickboxes:
             solar_system_view = SolarSystemView(
                 game_model=self.model,

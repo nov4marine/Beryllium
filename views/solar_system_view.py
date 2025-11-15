@@ -1,6 +1,7 @@
 import arcade
 import arcade.gui
-from views.ui_stuff import PersistentUI, PlanetLabel
+from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel
+
 
 
 class SolarSystemView(arcade.View):
@@ -24,6 +25,7 @@ class SolarSystemView(arcade.View):
 
         self.orbit_visuals = []
         self.planet_labels = []
+        self.planet_label_sprites = arcade.SpriteList()
 
         self.map_camera = arcade.Camera2D()
         self.hud_camera = arcade.Camera2D()
@@ -74,8 +76,8 @@ class SolarSystemView(arcade.View):
             self.celestial_bodies.append(celestial_sprite)
 
         # --- Planet Labels ---
-        for body in self.solar_system.bodies:
-            label = PlanetLabel(body)
+        for celestial_body_model in self.solar_system.bodies:
+            label = PlanetLabel(celestial_body_model, spritelist=self.planet_label_sprites)
             self.planet_labels.append(label)
 
 
@@ -136,8 +138,9 @@ class SolarSystemView(arcade.View):
         self.celestial_bodies.draw()
         
         if camera_zoom > 0.5:
-            for label in self.planet_labels:
-                label.draw()
+            #for label in self.planet_labels:
+                #label.update(camera_zoom)
+            self.planet_label_sprites.draw()
 
         self.hud_camera.use()
         self.solarsystemui_manager.draw()
@@ -191,11 +194,17 @@ class SolarSystemView(arcade.View):
         for sprite in self.celestial_bodies:
             # Only open menu for planets (not stars, asteroids, etc.)
             body = sprite.model_reference
+            print(f"Clicked on planet: {body.name}")
             if hasattr(body, 'colony') and body.colony:
                 if sprite.collides_with_point((world_x, world_y)):
-                    print(f"Clicked on planet: {body.name}")
                     self.persistent_ui.show_planet_menu(body.colony)
                     return
+
+        for label in self.planet_label_sprites:
+            if label.collides_with_point((world_x, world_y)):
+                print(f"Clicked on label: {label.body.name}")
+                return
+
 
     def on_mouse_release(self, x, y, button, key_modifiers):
         """
@@ -206,3 +215,6 @@ class SolarSystemView(arcade.View):
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.map_camera.zoom *= 1.1 if scroll_y > 0 else 0.9
         self.map_camera.zoom = max(0.1, min(self.map_camera.zoom, 5.0))  # Limit zoom level
+
+        for label in self.planet_labels:
+            label.update(self.map_camera.zoom)

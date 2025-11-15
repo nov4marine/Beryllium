@@ -45,11 +45,34 @@ class Nation:
         self.colonies.append(colony)
         self.planets.append(planet)
 
+    def synchronize_markets(self):
+        # 1. Aggregate supply and demand from all colonies
+        total_supply = {}
+        total_demand = {}
+        for colony in self.colonies:
+            for good, market_good in colony.local_market.goods.items():
+                total_supply[good] = total_supply.get(good, 0) + market_good.supply
+                total_demand[good] = total_demand.get(good, 0) + market_good.demand
+
+        # 2. Set national market supply/demand
+        for good in self.national_market.goods:
+            self.national_market.goods[good].supply = total_supply.get(good, 0)
+            self.national_market.goods[good].demand = total_demand.get(good, 0)
+
+        # 3. Calculate new prices (implement your price formula here)
+        self.national_market.update_prices()
+
+        # 4. Push prices back to all colonies
+        for colony in self.colonies:
+            for good in colony.local_market.goods:
+                colony.local_market.goods[good].current_price = self.national_market.goods[good].current_price
+
     def update_economy(self):
         for planet in self.planets:
             if planet.colony is not None:
                 colony = planet.colony
-                colony.run_local_economy()
+                colony.on_monthly_update()
+        self.synchronize_markets()
 
     def colonize(self, planet):
         planet.colony = Colony(planet, self, planet.name)

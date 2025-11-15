@@ -1,0 +1,44 @@
+import arcade
+import arcade.gui
+
+class Progressbar2(arcade.gui.UIAnchorLayout):
+    """A custom progress bar widget.
+
+    A UIAnchorLayout is a layout that arranges its children in a specific way.
+    The actual bar is a UISpace that fills the parent widget from left to right.
+    """
+
+    value = arcade.gui.Property(0.0)
+
+    def __init__(
+        self,
+        value: float = 1.0,
+        width=100,
+        height=20,
+        color = arcade.color.GREEN,
+    ) -> None:
+        super().__init__(
+            width=width,
+            height=height,
+            size_hint=None,  # disable size hint, so it just uses the size given
+        )
+        self.with_background(color=arcade.uicolor.GRAY_CONCRETE)
+        self.with_border(color=arcade.uicolor.BLACK)
+
+        self._bar = arcade.gui.UISpace(
+            color=color,
+            size_hint=(value, 1),
+        )
+        self.add(
+            self._bar,
+            anchor_x="left",
+            anchor_y="top",
+        )
+        self.value = value
+
+        # update the bar when the value changes
+        arcade.gui.bind(self, "value", self._update_bar)
+
+    def _update_bar(self):
+        self._bar.size_hint = (self.value, 1)
+        self._bar.visible = self.value > 0
