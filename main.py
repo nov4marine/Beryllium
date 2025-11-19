@@ -46,3 +46,17 @@ class MyGame:
 if __name__ == "__main__":
     game = MyGame()
     arcade.run()
+
+"""
+TODO: 
+1. Go over economy loop from the top down. make sure everything is working as intended.
+2. Get building GUI to a workable state, even if that means backing down to text labels. 
+3. Refactor game setup to a collected, organized form.
+4. Refactor game setup to start "in motion" instead of 100% unemployment and no statistics. 
+5. Incrementally expand planet menu to a functional state, again being tolerant of text in place of graphs.
+6. Investment system is currently a template and must transition to a workable state. 
+7. CREATE A DOCUMENT FOR PLANS. Too many features are falling apart in the details because I don't remember them. 
+8. CREATE A MAP of systems on the code side of things. Need a visual for how various systems interact. 
+9. Learn how to do logging. Embrace excitement of true spreadsheet simulation.
+10. Pytest? Kind of 9 and a half here ^
+"""

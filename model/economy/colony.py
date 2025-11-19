@@ -30,7 +30,7 @@ class Colony:
         External entities (like the Planet Menu or parent Nation) should use this.
         """
         return self.local_bls.statistics
-    
+
     # Job assignment methods
     def assign_jobs_simple(self):
         """
@@ -61,7 +61,7 @@ class Colony:
                         break
                 if pop.current_job:
                     break
-    
+
     def run_labor_market(self):
         """
         A more complex labor market simulation.
@@ -73,7 +73,7 @@ class Colony:
         for building in self.buildings:
             for job in building.jobs:
                 job.evaluate_labor_market()
-                if job.hiring == True:
+                if job.hiring:  # = True is shortened to this
                     job_offer = {"job": job, "openings": job.openings, "wage": job.wage}
                     job_board.append(job_offer)
 
@@ -100,7 +100,6 @@ class Colony:
                         job_offer["openings"] -= recruits
                         break  # Move to next pop
 
-
     def on_monthly_update(self):
         """This method aggregates all logic for the monthly economy tick"""
         # --- Step 1: Labor Market ---
@@ -116,6 +115,10 @@ class Colony:
         self.local_market.on_monthly_update()
         # --- Step 5: Update Local BLS Statistics ---
         self.local_bls.update_statistics()
+        # --- Step 6: Log Data and Analyze for inconsistencies (optional) ---
+        for building in self.buildings:
+            for job in building.jobs:
+                job.update_statistics()
 
     def setup_capital(self):
         print(f"capital deployed on planet {self.planet.name}. Nation color is {self.owner.color}")
@@ -127,37 +130,52 @@ class Colony:
             ResearchLab(self, levels=2),
             Factory(self, levels=2),
             AlloyFoundry(self, levels=2),
-            AdministrationCenter(self, levels=2),
+            #AdministrationCenter(self, levels=2),
             HoloTheater(self, levels=2),
         ]
 
-        self.pops = [Pop(self, size=1200000)]  # 1.2 million initial population
+        # --- Initial Population ---
+        # The game should start in a functional state, with buildings staffed and producing.
+        for building in self.buildings:
+            for job in building.jobs:
+                pop = Pop(self, size=10_000)
+                job.assigned_pops.append(pop)
+                self.pops.append(pop)
+                job.employees += pop.size
+                job.vacancies -= pop.size
+                pop.current_job = job
+                
+        # Perform a couple of monthly updates to stabilize the economy and populate statistics, as well as log initial state to detect issues.
+        for _ in range(2):
+            self.on_monthly_update()
+
         total_population = sum(pop.size for pop in self.pops)
         print(f"Colony {self.name} initialized with {len(self.buildings)} buildings and population {total_population}.")
 
         # Goals for building/job operating logic:
     # A. Staffing:
-        # 1. By default, buildings should attempt to stay fully staffed at all times.
-        # 2. Staffing can be reduced if building is operating at a loss for more than 3 consecutive months.
-        # 3. Qualified workers can be poached by other buildings offering higher wages.
-        # 4. Staffing adjustments should be gradual, loose target: no more than 5% of total jobs per month.
-        # 5. building should maintain a minimum 10% employment/staffing level. If below, attempt to hire more pops.
-            # 5a. If staffing remains at or below 50% for 3 consecutive months, building should prepare to downsize (remove a level).
+    # 1. By default, buildings should attempt to stay fully staffed at all times.
+    # 2. Staffing can be reduced if building is operating at a loss for more than 3 consecutive months.
+    # 3. Qualified workers can be poached by other buildings offering higher wages.
+    # 4. Staffing adjustments should be gradual, loose target: no more than 5% of total jobs per month.
+    # 5. building should maintain a minimum 10% employment/staffing level. If below, attempt to hire more pops.
+    # 5a. If staffing remains at or below 50% for 3 consecutive months, building should prepare to downsize (remove a level).
     # B. Wages:
-        # 1. Buildings should always seek to to maximize profits by adjusting wages and to a lesser extent, staffing/production levels.
-            # 1a. Starting wages should planet average for a given profession, else 10. Wages should adjust by +/- 2% per month.
-            # 1b. The decision to adjust(reduce) wages should be based on local labor market conditions. Mainly underemployment rates for qualified pops.
-            # 1c. To prevent oscillation, wages should not decrease if underemployment is: 
-                # below 5%, or less than less than 10 buildings worth of employees, whichever is less.
-        # 2. Buildings should increase wages if:
-            # 2a. They are unable to fill vacancies for more than 1 consecutive months.
-        # 3. Wages should be capped if building profit margin is less than 10%
+    # 1. Buildings should always seek to maximize profits by adjusting wages and to a lesser extent, staffing/production levels.
+    # 1a. Starting wages should planet average for a given profession, else 10. Wages should adjust by +/- 2% per month.
+    # 1b. The decision to adjust(reduce) wages should be based on local labor market conditions. Mainly underemployment rates for qualified pops.
+    # 1c. To prevent oscillation, wages should not decrease if underemployment is:
+    # below 5%, or less than 10 buildings worth of employees, whichever is less.
+    # 2. Buildings should increase wages if:
+    # 2a. They are unable to fill vacancies for more than 1 consecutive months.
+    # 3. Wages should be capped if building profit margin is less than 10%
 
 
 class Building:
     """A building on a colony, which can produce goods and services, employ pops, and generate profit"""
 
-    def __init__(self, name, construction_cost, construction_time, upkeep, inputs, outputs, geography=None, jobs=None, levels=0, colony=None):
+    def __init__(self, name, construction_cost, construction_time, upkeep, inputs, outputs, geography=None, jobs=None,
+                 levels=0, colony=None):
         self.name = name
         self.construction_cost = construction_cost
         self.construction_time = construction_time
@@ -169,12 +187,13 @@ class Building:
         self.levels = levels
         self.colony = colony
 
-        self.revenue = 0
-        self.expenses = 0
-        self.profit = 0
+        self.revenue = 0.0
+        self.expenses = 0.0
+        self.profit = 0.0
         self.ownership = {"total": 0, "private": 0, "government": 0, "workers": 0}
 
-        self.productivity = 0
+        self.productivity = 0.0
+        self.staffing = 0.0
 
         self.balance_sheet = {
             "revenue": {},
@@ -190,9 +209,9 @@ class Building:
     def operate(self):
         """Operate the building for a tick, processing goods, paying wages, and allocating profits."""
         # Reset for the tick
-        self.revenue = 0
-        self.expenses = 0
-        self.profit = 0
+        self.revenue = 0.0
+        self.expenses = 0.0
+        self.profit = 0.0
 
         self.process_goods()
         self.pay_workers()
@@ -206,9 +225,10 @@ class Building:
             job_staffing.append(staffing)
 
         total_staffing = sum(job_staffing) / len(job_staffing)
+        self.staffing = total_staffing
 
-        expenses = 0
-        revenue = 0
+        expenses = 0.0
+        revenue = 0.0
         for good, quantity in self.inputs.items():
             total_inputs = quantity * total_staffing * self.levels
             expenses += self.colony.local_market.buy_good(good, total_inputs)
@@ -231,7 +251,7 @@ class Building:
         self.profit = self.revenue - self.expenses
         if self.profit >= 0:
             dividends = self.profit
-            pass      
+            pass
 
     def calculate_productivity(self):
         total_employees = sum(job.employees for job in self.jobs)
@@ -251,7 +271,7 @@ class Job:
         self.openings = 0
 
         # Flags for labor market evaluation
-        self.hiring = True # whether the job is actively hiring
+        self.hiring = True  # whether the job is actively hiring
 
     def evaluate_labor_market(self):
         """
@@ -295,6 +315,23 @@ class Job:
         self.assigned_pops.append(pop)
         pop.current_job = self
 
+    def update_statistics(self):
+        """Perform a few simple checks to make sure the job's internal data is consistent. Log and correct if not."""
+        total_assigned = sum(pop.size for pop in self.assigned_pops)
+        if total_assigned != self.employees:
+            print(f"Warning: Job {self.profession} has inconsistent employee count! Assigned: {total_assigned}, Recorded: {self.employees}")
+            self.employees = total_assigned
+        
+        for pop in self.assigned_pops:
+            if pop.current_job != self:
+                print(f"Warning: Pop in job {self.profession} has inconsistent job reference!")
+                pop.current_job = self
+
+        if self.employees + self.vacancies != self.max_quantity:
+            print(f"Warning: Job {self.profession} has inconsistent vacancy count! Employees: {self.employees}, Vacancies: {self.vacancies}, Max: {self.max_quantity}")
+            self.vacancies = self.max_quantity - self.employees
+
+
 
 class Pop:
     def __init__(self, colony, size, current_job=None):
@@ -308,6 +345,7 @@ class Pop:
 
     def update_economy_tick(self):
         # Gross income from job
+        self.wage = self.current_job.wage if self.current_job else 5  # default wage if unemployed
         gross_income = self.wage * self.size
         # Taxes and transfers
         taxes = self.calculate_taxes(gross_income)
@@ -321,7 +359,7 @@ class Pop:
 
     def calculate_needs(self):
         NEEDS_PARAMETERS = {
-        # Good: [Base (Subsistence), Scaling Factor (alpha), Wealth Elasticity Exponent (beta)]
+            # Good: [Base (Subsistence), Scaling Factor (alpha), Wealth Elasticity Exponent (beta)]
             "Food": [0.2, 0.27, 0.8],
             "Housing": [0.06, 0.27, 1.0],
             "Consumer Goods": [0.02, 0.11, 1.0],
@@ -342,13 +380,13 @@ class Pop:
         self.needs = consumption
 
     def fulfill_needs(self, market):
-        scale = self.size 
+        scale = self.size
         expenses = 0
         for good, quantity in self.needs.items():
             cost = market.buy_good(good, (quantity * scale))
             expenses += cost
         return expenses
-    
+
     def calculate_taxes(self, gross_income):
         TAX_RATE = 0.1  # 10% flat tax for simplicity
         taxes = gross_income * TAX_RATE
@@ -366,12 +404,14 @@ class Pop:
         new_pop.wealth = self.wealth
         self.colony.pops.append(new_pop)
         return new_pop
-    
+
+
 class LocalBLS:
     """
     Local Bureau of Labor Statistics for tracking all economic data in the colony.
     TODO: average wage should be broken down by profession, as well as aggregate.
     """
+
     def __init__(self, colony):
         self.colony = colony
         self.statistics = {
@@ -397,30 +437,29 @@ class LocalBLS:
         # 1. Tally Population
         for pop in self.colony.pops:
             total_population += pop.size
-            
+
         # 2. Tally Jobs, Wages, and Vacancies across all Buildings
         # This iterates through every job in every building to aggregate the data.
         for building in self.colony.buildings:
             # Note: Must handle case where building.jobs is None or empty list
             if building.jobs:
                 for job in building.jobs:
-                    
                     # Number of employed Pops for this job
                     employed_in_job = job.max_quantity - job.vacancies
-                    
+
                     # Accumulate totals
                     total_employed += employed_in_job
                     total_vacancies += job.vacancies
-                    
+
                     # Wage Bill: Wage * Number of Employed
                     total_wages += job.wage * employed_in_job
 
         # --- Calculate Derived Statistics ---
-        
+
         # Unemployment
         unemployed_pops = total_population - total_employed
         unemployment_rate = unemployed_pops / total_population if total_population > 0 else 0.0
-        
+
         # Average Wage
         average_wage = total_wages / total_employed if total_employed > 0 else 0.0
 
@@ -433,16 +472,18 @@ class LocalBLS:
         self.statistics["buildings"] = len(self.colony.buildings)
         # GDP calculation can be added here based on production data
 
-
     def update_statistics_dense(self):
         """A denser version using sum() with generator expressions for brevity. Not currently used, since clarity is preferred."""
         total_population = sum(pop.size for pop in self.colony.pops)
-        total_employed = sum(job.max_quantity - job.vacancies for building in self.colony.buildings for job in building.jobs)
-        total_wages = sum(job.wage * (job.max_quantity - job.vacancies) for building in self.colony.buildings for job in building.jobs)
+        total_employed = sum(
+            job.max_quantity - job.vacancies for building in self.colony.buildings for job in building.jobs)
+        total_wages = sum(job.wage * (job.max_quantity - job.vacancies) for building in self.colony.buildings for job in
+                          building.jobs)
         total_vacancies = sum(job.vacancies for building in self.colony.buildings for job in building.jobs)
 
         self.statistics["population"] = total_population
-        self.statistics["unemployment_rate"] = (total_population - total_employed) / total_population if total_population > 0 else 0.0
+        self.statistics["unemployment_rate"] = (
+                                                           total_population - total_employed) / total_population if total_population > 0 else 0.0
         self.statistics["average_wage"] = total_wages / total_employed if total_employed > 0 else 0.0
         self.statistics["job_vacancies"] = total_vacancies
         self.statistics["buildings"] = len(self.colony.buildings)
@@ -450,7 +491,7 @@ class LocalBLS:
 
         # Publish statistics to colony
         self.colony.population = total_population
-        
+
 
 ############################################################################
 #now the actual buildings and jobs for the colony
@@ -472,18 +513,18 @@ class LocalBLS:
 # Also Gonna initially aim to just copy Stellaris, and add my own flavor as we go.
 # When in doubt, use Labor Theory of Value
 # Stellaris Buildings:
-    # Tier 1: upkeep 2, time 360, minerals 400
-    # Tier 2: upkeep 5 + 1 rare, time 480, minerals 600 + 50 rare
-    # Tier 3: upkeep 8 + 2 rare, time 600, minerals 800 + 100 rare
+# Tier 1: upkeep 2, time 360, minerals 400
+# Tier 2: upkeep 5 + 1 rare, time 480, minerals 600 + 50 rare
+# Tier 3: upkeep 8 + 2 rare, time 600, minerals 800 + 100 rare
 
-    # districts: upkeep 1, time 240, minerals 300
+# districts: upkeep 1, time 240, minerals 300
 
 #input and output goods should be a list of dictionaries
 # Remember to convert upkeep cost from energy credits to construction points later
 
 class MineralExtractor(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Miner", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Miner", max_quantity=10000, employer=self)]
         super().__init__(
             name="Mineral Extractor",
             construction_cost=300,
@@ -497,9 +538,10 @@ class MineralExtractor(Building):
             colony=colony
         )
 
+
 class EnergyPlant(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Engineer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Engineer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Energy Plant",
             construction_cost=300,
@@ -513,9 +555,10 @@ class EnergyPlant(Building):
             colony=colony
         )
 
+
 class Farm(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Farmer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Farmer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Farm",
             construction_cost=300,
@@ -529,9 +572,10 @@ class Farm(Building):
             colony=colony
         )
 
+
 class CityDistrict(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Urban Worker", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Urban Worker", max_quantity=10000, employer=self)]
         super().__init__(
             name="City District",
             construction_cost=300,
@@ -545,11 +589,12 @@ class CityDistrict(Building):
             colony=colony
         )
 
+
 # Now some tier 2 buildings
 
 class ResearchLab(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Scientist", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Scientist", max_quantity=10000, employer=self)]
         super().__init__(
             name="Research Lab",
             construction_cost=400,
@@ -563,25 +608,27 @@ class ResearchLab(Building):
             colony=colony
         )
 
+
 class Factory(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Factory Worker", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Factory Worker", max_quantity=10000, employer=self)]
         super().__init__(
             name="Factory",
             construction_cost=400,
             construction_time=360,
             geography="Urban",
             upkeep=2,
-            inputs={"Minerals": 6,},
+            inputs={"Minerals": 6, },
             outputs={"Consumer Goods": 6},
             jobs=jobs,
             levels=levels,
             colony=colony
         )
 
+
 class AlloyFoundry(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Metallurgist", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Metallurgist", max_quantity=10000, employer=self)]
         super().__init__(
             name="Alloy Foundry",
             construction_cost=400,
@@ -595,9 +642,10 @@ class AlloyFoundry(Building):
             colony=colony
         )
 
+
 class AdministrationCenter(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Administrator", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Administrator", max_quantity=10000, employer=self)]
         super().__init__(
             name="Administration Center",
             construction_cost=400,
@@ -611,9 +659,10 @@ class AdministrationCenter(Building):
             colony=colony
         )
 
+
 class HoloTheater(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Entertainer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Entertainer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Holo-Theater",
             construction_cost=400,
@@ -627,9 +676,10 @@ class HoloTheater(Building):
             colony=colony
         )
 
+
 class HydroponicsFarm(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Hydroponic Farmer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Hydroponic Farmer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Hydroponics Farm",
             construction_cost=400,
@@ -643,9 +693,10 @@ class HydroponicsFarm(Building):
             colony=colony
         )
 
+
 class HealthClinic(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Doctor", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Doctor", max_quantity=10000, employer=self)]
         super().__init__(
             name="Health Clinic",
             construction_cost=400,
@@ -653,15 +704,16 @@ class HealthClinic(Building):
             geography="Urban",
             upkeep=2,
             inputs={"Consumer Goods": 1},
-            outputs={"Health Services": 10}, # in stellaris, output is 4 amenities, 5% growth, and 2.5% habitability
+            outputs={"Health Services": 10},  # in stellaris, output is 4 amenities, 5% growth, and 2.5% habitability
             jobs=jobs,
             levels=levels,
             colony=colony
         )
 
+
 class Spaceport(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Dockworker", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Dockworker", max_quantity=10000, employer=self)]
         super().__init__(
             name="Spaceport",
             construction_cost=400,
@@ -675,9 +727,10 @@ class Spaceport(Building):
             colony=colony
         )
 
+
 class RoboticsFactory(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Robotics Engineer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Robotics Engineer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Robotics Factory",
             construction_cost=400,
@@ -691,9 +744,10 @@ class RoboticsFactory(Building):
             colony=colony
         )
 
+
 class EnforcementCenter(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Law Enforcer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Law Enforcer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Enforcement Center",
             construction_cost=400,
@@ -708,11 +762,12 @@ class EnforcementCenter(Building):
             colony=colony
         )
 
+
 # Special Resource Buildings
 
 class Refinery(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Refinery Worker", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Refinery Worker", max_quantity=10000, employer=self)]
         super().__init__(
             name="Refinery",
             construction_cost=500,
@@ -726,9 +781,10 @@ class Refinery(Building):
             colony=colony
         )
 
+
 class Harvester(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Harvester Operator", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Harvester Operator", max_quantity=10000, employer=self)]
         super().__init__(
             name="Harvester",
             construction_cost=200,
@@ -742,11 +798,12 @@ class Harvester(Building):
             colony=colony
         )
 
+
 # Specialized Buildings
 
 class ResearchInstitute(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Senior Scientist", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Senior Scientist", max_quantity=10000, employer=self)]
         super().__init__(
             name="Research Institute",
             construction_cost=600,
@@ -754,17 +811,18 @@ class ResearchInstitute(Building):
             geography="Urban",
             upkeep=5,
             inputs={"Exotic Goods": 1, "Consumer Goods": 2},
-            outputs={"Research": 1.15}, # 15% multiplier. rn is just 1.15 points 
+            outputs={"Research": 1.15},  # 15% multiplier. rn is just 1.15 points
             jobs=jobs,
             levels=levels,
             colony=colony
         )
 
+
 # Military Buildings
 
 class Shipyard(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Shipbuilder", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Shipbuilder", max_quantity=10000, employer=self)]
         super().__init__(
             name="Shipyard",
             construction_cost=500,
@@ -772,15 +830,16 @@ class Shipyard(Building):
             geography="Urban",
             upkeep=3,
             inputs={"Alloys": 4, "Energy": 2},
-            outputs={"Warships": 1}, # in stellaris, each shipyard produces 1 ship per month
+            outputs={"Warships": 1},  # in stellaris, each shipyard produces 1 ship per month
             jobs=jobs,
             levels=levels,
             colony=colony
         )
 
+
 class NavalBase(Building):
     def __init__(self, colony, levels=0):
-        jobs = [Job(profession="Naval Officer", max_quantity=10000000, employer=self)]
+        jobs = [Job(profession="Naval Officer", max_quantity=10000, employer=self)]
         super().__init__(
             name="Naval Base",
             construction_cost=600,
@@ -788,7 +847,7 @@ class NavalBase(Building):
             geography="Urban",
             upkeep=4,
             inputs={"Alloys": 2, "Energy": 2},
-            outputs={"Fleet Capacity": 10}, # in stellaris, each naval base produces 10 fleet capacity
+            outputs={"Fleet Capacity": 10},  # in stellaris, each naval base produces 10 fleet capacity
             jobs=jobs,
             levels=levels,
             colony=colony

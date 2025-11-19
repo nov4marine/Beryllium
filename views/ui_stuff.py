@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from views.UI_stuff.planet_menu import PlanetMenu
+from views.UI_stuff.planet_menu import PlanetMenu, BuildingGUI
 from views.UI_stuff.market_gui import MarketGUI
 
 
@@ -15,7 +15,7 @@ class PersistentUI:
 
         # --- Sub-Components ---
         # all of these must be added to both draw and update
-        self.planet_menu = PlanetMenu(self.asset_manager)
+        self.planet_menu = PlanetMenu(self, self.asset_manager)
         self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
         self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
         

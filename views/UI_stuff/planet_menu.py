@@ -1,6 +1,9 @@
 import arcade
 import arcade.gui
 
+
+#from views.UI_stuff.building_gui import BuildingGUI
+
 class GenericMenu:
     """
     A generic menu window with a title bar and close button. Content area to be filled by subclasses.
@@ -8,8 +11,9 @@ class GenericMenu:
     Ensure to call open_window() to show the menu and enable the manager. Then call draw() in your view's draw() method,
     and update() in your view's on_update() method (or once monthly/daily if preferred).
     """
+
     # This should always exist in the view or persistent UI, and is activated when needed, which opens the window
-    # with the relavant object updating the content.
+    # with the relevant object updating the content.
     def __init__(self, asset_manager=None):
         self.manager = arcade.gui.UIManager()
         self.asset_manager = asset_manager
@@ -17,7 +21,7 @@ class GenericMenu:
         self.root = arcade.gui.UIAnchorLayout()
         self.manager.add(self.root)
         self.window = arcade.gui.UIAnchorLayout(size_hint=(0.7, 0.7))
-        self.window.with_background(color=arcade.color.DARK_SLATE_GRAY) # Can probably delete this
+        self.window.with_background(color=arcade.color.DARK_SLATE_GRAY)  # Can probably delete this
         self.root.add(self.window)
 
         self.top_bar = arcade.gui.UIAnchorLayout(size_hint=(1, 0.08))
@@ -35,7 +39,7 @@ class GenericMenu:
         self.window.add(self.content_frame, anchor_y="bottom")
         #self.setup_content() # Populate content_frame
         # I'm realizing the above line may be better called when opening the window with specific data, allowing the menu to be created before data exists.
-    
+
     def setup_content(self):
         """
         To be overridden by subclasses to populate content_frame. Does nothing on its own.
@@ -68,10 +72,13 @@ class PlanetMenu(GenericMenu):
     Call set_planet(colony) to set the current colony to display.
     All content must be added to the content_frame defined in GenericMenu. (and probably cleared first)
     """
-    def __init__(self, asset_manager):
+
+    def __init__(self, persistent_ui, asset_manager):
         super().__init__(asset_manager)
         self.planet = None  # Will be set to a Colony
-        self.nation = None # Does nothing for now, but could be useful
+        self.nation = None  # Does nothing for now, but could be useful
+
+        self.persistent_ui = persistent_ui
         self.asset_manager = asset_manager
 
         self.current_tab = None
@@ -87,12 +94,12 @@ class PlanetMenu(GenericMenu):
         self.manager.enable()
 
     def show_summary_tab(self):
-        self.content_frame.clear() # Clear previous content
-        grid = arcade.gui.UIGridLayout(size_hint=(1, 1), row_count=3, column_count=4,)
+        self.content_frame.clear()  # Clear previous content
+        grid = arcade.gui.UIGridLayout(size_hint=(1, 1), row_count=3, column_count=4, )
         grid.with_background(color=arcade.color.CHARCOAL)
-        
+
         # --- Box 1 --- Primary planet art and info with governor portrait and name
-        box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Primary planet art and info
+        box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Primary planet art and info
         #climate = self.planet.planet.climate if self.planet and self.planet.planet else "not_implemented"
         climate = self.planet.planet.climate if self.planet else "continental"
         print(f"Planet climate for menu: {climate}")
@@ -101,13 +108,16 @@ class PlanetMenu(GenericMenu):
         box1.with_border()
         grid.add(box1, row=0, column=0, column_span=3)
 
-        stats_box = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.1), space_between=50) # Key stats
+        stats_box = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.1), space_between=50)  # Key stats
         stats_box.with_padding(all=10)
         stats_box.with_background(color=self.semi_transparent_bg)
         self.gdp_label = arcade.gui.UILabel(text=f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}")
-        self.population_label = arcade.gui.UILabel(text=f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}")
-        self.stability_label = arcade.gui.UILabel(text=f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}")
-        self.unemployment_label = arcade.gui.UILabel(text=f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%")
+        self.population_label = arcade.gui.UILabel(
+            text=f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}")
+        self.stability_label = arcade.gui.UILabel(
+            text=f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}")
+        self.unemployment_label = arcade.gui.UILabel(
+            text=f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%")
 
         stats_box.add(self.gdp_label)
         stats_box.add(self.population_label)
@@ -116,11 +126,11 @@ class PlanetMenu(GenericMenu):
         box1.add(stats_box, anchor_y="bottom")
 
         # --- Box 2 --- Buildings overview
-        box2 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Buildings overview
+        box2 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Buildings overview
         box2.with_border()
         grid.add(box2, row=1, column=0, column_span=2, row_span=2)
 
-        urban_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5)) # Urban buildings
+        urban_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5))  # Urban buildings
         urban_box.with_border()
         urban_label = arcade.gui.UILabel(text="Urban Buildings")
         urban_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9), space_between=10)
@@ -133,13 +143,13 @@ class PlanetMenu(GenericMenu):
                 if building.geography == "Urban":
                     urban_building_list.append(building)
             for building in urban_building_list[:7]:
-                urban_buildings.add(BuildingWidget(building, self.asset_manager, size=100))
+                urban_buildings.add(BuildingWidget(self, building, self.asset_manager, size=100))
 
         urban_box.add(urban_label, anchor_y="top")
         urban_box.add(urban_buildings, anchor_x="center", anchor_y="center")
         box2.add(urban_box, anchor_y="top")
 
-        rural_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5)) # Rural buildings
+        rural_box = arcade.gui.UIAnchorLayout(size_hint=(1, 0.5))  # Rural buildings
         rural_box.with_border()
         rural_label = arcade.gui.UILabel(text="Rural Buildings")
         rural_buildings = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.9), space_between=10)
@@ -151,16 +161,17 @@ class PlanetMenu(GenericMenu):
                 if building.geography == "Rural":
                     rural_buildings_list.append(building)
             for building in rural_buildings_list[:7]:
-                rural_buildings.add(BuildingWidget(building, self.asset_manager, size=100))
+                rural_buildings.add(BuildingWidget(self, building, self.asset_manager, size=100))
 
         rural_box.add(rural_label, anchor_y="top")
         rural_box.add(rural_buildings, anchor_y="center", anchor_x="center")
         box2.add(rural_box, anchor_y="bottom")
 
         # --- Box 3 --- Celestial body info
-        box3 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # celestial body info
+        box3 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # celestial body info
         box3.with_border()
-        box3.with_background(texture=self.asset_manager.ui_art.get("solar_system_background", self.asset_manager.ui_art["default"]))
+        box3.with_background(
+            texture=self.asset_manager.ui_art.get("solar_system_background", self.asset_manager.ui_art["default"]))
         grid.add(box3, row=0, column=3)
 
         planet_info = arcade.gui.UIBoxLayout(vertical=True, size_hint=(0.5, 1), space_between=10, anchor_y="center")
@@ -181,7 +192,7 @@ class PlanetMenu(GenericMenu):
         box3.add(planet_sprite_box, anchor_x="right")
 
         # --- Box 4 --- Local market info
-        box4 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Local market info
+        box4 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Local market info
         box4.with_border()
         grid.add(box4, row=1, column=2, row_span=2)
 
@@ -189,7 +200,7 @@ class PlanetMenu(GenericMenu):
         box4.add(market_label, anchor_y="top")
 
         # --- Box 5 --- Build queue
-        box5 = arcade.gui.UIAnchorLayout(size_hint=(1, 1)) # Build queue
+        box5 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Build queue
         box5.with_border()
         grid.add(box5, row=1, column=3, row_span=2)
 
@@ -204,34 +215,53 @@ class PlanetMenu(GenericMenu):
             self.population_label.text = f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}"
             self.stability_label.text = f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}"
             self.unemployment_label.text = f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
-              
+            
 
-class BuildingWidget(arcade.gui.UIAnchorLayout):
-    def __init__(self, building, asset_manager, size=80):
-        super().__init__(size_hint=None, width=size, height=size)
+class BuildingWidget(arcade.gui.UITextureButton):
+    def __init__(self, planet_menu, building, asset_manager, size=80):
+        # Get the building icon texture
+        texture = asset_manager.building_icons.get(building.name, asset_manager.building_icons["default"])
+        super().__init__(texture=texture, width=size, height=size)
+        self.planet_menu = planet_menu
         self.building = building
-        self.assets = asset_manager
-        self.with_border()
-        self.background = self.assets.building_icons.get(self.building.name, self.assets.building_icons["default"])
-        #self.with_background(texture=self.assets.building_icons[f'{self.building.name}'])
-        self.with_background(texture=self.background)
+        self.asset_manager = asset_manager
 
-        #name_label = arcade.gui.UILabel(text=building.name)
-        level_label = arcade.gui.UILabel(text=f"L{building.levels}") # top left
-        level_label.with_background(color=arcade.color.CHARCOAL)
-        productivity_label = arcade.gui.UILabel(text=f"${building.productivity}/w") # top right
-        productivity_label.with_background(color=arcade.color.CHARCOAL)
-        profit_label = arcade.gui.UILabel(text=f"${building.profit}") # bottom middle
-        profit_label.with_background(color=arcade.color.CHARCOAL)
+        # Overlay labels
+        self.level_label = arcade.gui.UILabel(
+            text=f"L{building.levels}", font_size=10, text_color=arcade.color.WHITE, 
+        )
+        self.level_label.with_background(color=arcade.color.CHARCOAL)
+        self.productivity_label = arcade.gui.UILabel(
+            text=f"${building.productivity}/w", font_size=10, text_color=arcade.color.WHITE, 
+        )
+        self.productivity_label.with_background(color=arcade.color.CHARCOAL)
+        self.profit_label = arcade.gui.UILabel(
+            text=f"${building.profit}", font_size=10, text_color=arcade.color.WHITE, 
+        )
+        self.profit_label.with_background(color=arcade.color.CHARCOAL)
 
-        #self.add(name_label, anchor_y="top", anchor_x="center")
-        self.add(level_label, anchor_y="top", anchor_x="left")
-        self.add(productivity_label, anchor_y="top", anchor_x="right")
-        self.add(profit_label, anchor_y="bottom", anchor_x="center")
+        # Add overlays (positions: top-left, top-right, bottom-center)
+        self.add(self.level_label, anchor_x="left", anchor_y="top", align_x=2, align_y=-2)
+        self.add(self.productivity_label, anchor_x="right", anchor_y="top", align_x=-2, align_y=-2)
+        self.add(self.profit_label, anchor_x="center", anchor_y="bottom", align_y=2)
+
+        @self.event("on_click")
+        def on_click_building(event):
+            print(f"Building {self.building.name} clicked!")
+            self.planet_menu.content_frame.clear()
+            building_gui = BuildingGUI(self.asset_manager)
+            building_gui.open_window(self.building)
+
+    def on_update(self, dt):
+        # Update labels in case building stats changed
+        self.level_label.text = f"L{self.building.levels}"
+        self.productivity_label.text = f"${self.building.productivity}/w"
+        self.profit_label.text = f"${self.building.profit}"
 
 
 class PlanetInterface:
     """Deprecated: A UI manager for the planet menu, handling opening, closing, and tab switching."""
+
     def __init__(self, model):
         self.model = model
         self.planet = None  # Will be set to a Colony
@@ -350,3 +380,151 @@ class PlanetInterface:
         if self.manager._enabled:
             self.manager.draw()
 
+
+################################### GUI CONSTRUCTS ###################################
+# stupid circular imports. gotta fix later
+
+class Progressbar2(arcade.gui.UIAnchorLayout):
+    value = arcade.gui.Property(0.0)
+
+    def __init__(
+            self,
+            value: float = 1.0,
+            width=100,
+            height=20,
+            color=arcade.color.GREEN,
+    ) -> None:
+        super().__init__(
+            width=width,
+            height=height,
+            size_hint=None,  # disable size hint, so it just uses the size given
+        )
+        self.with_background(color=arcade.uicolor.GRAY_CONCRETE)
+        self.with_border(color=arcade.uicolor.BLACK)
+
+        self._bar = arcade.gui.UISpace(
+            color=color,
+            size_hint=(value, 1),
+        )
+        self.add(
+            self._bar,
+            anchor_x="left",
+            anchor_y="top",
+        )
+        self.value = value
+
+        # update the bar when the value changes
+        arcade.gui.bind(self, "value", self._update_bar)
+
+    def _update_bar(self):
+        self._bar.size_hint = (self.value, 1)
+        self._bar.visible = self.value > 0
+
+
+class BuildingGUI(GenericMenu):
+    """
+    GUI for displaying building information and management options.
+    For the first draft, this will simply imitate Victora 3's building UI.
+    """
+
+    def __init__(self, asset_manager, *args, **kwargs):
+        super().__init__(asset_manager=asset_manager, *args, **kwargs)
+        print("BuildingGUI initialized")
+        self.building = None
+        self.asset_manager = asset_manager
+        self.content_frame.with_background(color=arcade.color.DARK_SLATE_GRAY)
+        self.window.size_hint = (0.3, 0.6)
+        self.window.center_x = 600
+
+        self.info_column = arcade.gui.UIBoxLayout(size_hint=(1, 1), vertical=True, space_between=10)
+        self.content_frame.add(self.info_column)
+
+    def setup_content(self):
+        self.info_column.clear()
+        # Building Name
+        self.title_label.text = self.building.name
+
+        # --- Box 1: --- Icon, Cash reseves, staffing, and productivity ---
+        box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 0.2))
+        box1.with_background(color=arcade.color.DARK_BLUE_GRAY)
+        box1.with_border()
+
+        icon_texture = self.asset_manager.building_icons.get(self.building.name,
+                                                             self.asset_manager.building_icons["default"])
+        building_icon = arcade.gui.UIImage(texture=icon_texture, width=64, height=64)
+        self.staffing_bar = Progressbar2(value=self.building.staffing)
+        #self.cash_reserves_bar = Progressbar2(value=self.building.cash_reserves)
+        productivity_chart = arcade.gui.UILabel(text=f"Productivity: {self.building.productivity}", font_size=14)
+        box1.add(building_icon, anchor_x="left", anchor_y="center", align_x=10)
+        box1.add(self.staffing_bar, anchor_x="center", anchor_y="center")
+        #box1.add(self.cash_reserves_bar, anchor_x="center", anchor_y="center")
+        box1.add(productivity_chart, anchor_x="right", anchor_y="center", align_x=-10)
+        self.info_column.add(box1)
+
+        # --- Box 2: --- Production Process ---
+        box2 = arcade.gui.UIBoxLayout(size_hint=(1, 0.4), vertical=False)
+        box2.with_background(color=arcade.color.DARK_BLUE_GRAY)
+        box2.with_border()
+
+        #production_label = arcade.gui.UILabel(text="Production Process:", font_size=16)
+
+        # Input Goods and Wages
+        input_box = arcade.gui.UIBoxLayout(size_hint=(0.5, 1), vertical=True, space_between=5)
+        input_label = arcade.gui.UILabel(text="Inputs:", font_size=14)
+        input_box.add(input_label)
+        for input_good, amount in self.building.inputs.items():
+            good_icon = self.asset_manager.resource_icons.get(input_good, self.asset_manager.resource_icons["default"])
+            good_widget = arcade.gui.UIBoxLayout(size_hint=(1, 0.2), vertical=False, space_between=5)
+            good_widget.with_border()
+            icon_image = arcade.gui.UIImage(texture=good_icon, width=32, height=32)
+            #good_name = arcade.gui.UILabel(text=f"{input_good}: {amount} for ${cost}", font_size=12)
+            good_widget.add(icon_image)
+            #good_widget.add(good_name)
+            input_box.add(good_widget)
+        wages_label = arcade.gui.UILabel(text=f"Wages per cycle: ${self.building.balance_sheet["expenses"]["wages"]:.2f}",
+                                         font_size=12)
+        input_box.add(wages_label)
+
+        # Output Goods
+        output_box = arcade.gui.UIBoxLayout(size_hint=(0.5, 1), vertical=True, space_between=5)
+        output_label = arcade.gui.UILabel(text="Outputs:", font_size=14)
+        output_box.add(output_label)
+        for output_good, amount in self.building.outputs.items():
+            good_icon = self.asset_manager.resource_icons.get(output_good, self.asset_manager.resource_icons["default"])
+            good_widget = arcade.gui.UIBoxLayout(size_hint=(1, 0.2), vertical=False, space_between=5)
+            good_widget.with_border()
+            icon_image = arcade.gui.UIImage(texture=good_icon, width=32, height=32)
+            good_name = arcade.gui.UILabel(text=f"{output_good}: {amount}", font_size=12)
+            good_widget.add(icon_image)
+            good_widget.add(good_name)
+            output_box.add(good_widget)
+        balance_label = arcade.gui.UILabel(text=f"Profit per cycle: ${self.building.profit}", font_size=12)
+        output_box.add(balance_label)
+        #throughput_label = arcade.gui.UILabel(text=f"Throughput: {self.building.get_throughput():.1f} units/cycle", font_size=12)
+        #output_box.add(throughput_label)
+
+        box2.add(input_box)
+        box2.add(output_box)
+        #box2.add(production_label, anchor_x="center", anchor_y="top", align_y=-10)
+        self.info_column.add(box2)
+
+        # --- Box 3: --- Ownership and Upgrades ---
+        box3 = arcade.gui.UIBoxLayout(size_hint=(1, 0.2), vertical=False, space_between=10)
+        box3.with_background(color=arcade.color.DARK_BLUE_GRAY)
+        box3.with_border()
+
+        #owner_label = arcade.gui.UILabel(text=f"Owner: {self.building.owner.name}", font_size=14)
+        #upgrade_label = arcade.gui.UILabel(text=f"Upgrades: {len(self.building.upgrades)}/{self.building.max_upgrades}", font_size=14)
+        #box3.add(owner_label)
+        #box3.add(upgrade_label)
+        self.info_column.add(box3)
+
+    def on_daily_update(self):
+        if self.manager.enabled and self.building:
+            pass  # For future daily updates if needed
+
+    def open_window(self, building):
+        self.building = building
+        self.title_label.text = f"Building: {building.name}"
+        self.setup_content()
+        self.manager.enable()

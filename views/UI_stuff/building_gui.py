@@ -1,8 +1,6 @@
 import arcade
 import arcade.gui
-from views.UI_stuff.gui_constructs import Progressbar2
 from views.UI_stuff.planet_menu import GenericMenu
-
 
 class BuildingGUI(GenericMenu):
     """
@@ -32,13 +30,12 @@ class BuildingGUI(GenericMenu):
 
         icon_texture = self.asset_manager.building_icons.get(self.building.name, self.asset_manager.building_icons["default"])
         building_icon = arcade.gui.UIImage(texture=icon_texture, width=64, height=64)
-        # TODO: implement progressbar class
-        #staffing_bar = arcade.gui.UIProgressBar(value=self.building.get_staffing_percentage()*100, min_value=0, max_value=100, width=200, height=20)
-        #cash_reserves_bar = arcade.gui.UIProgressBar(value=self.building.cash_reserves*100, min_value=0, max_value=100, width=200, height=20)
-        productivity_chart = arcade.gui.UILabel(text=f"Productivity: {self.building.get_productivity():.1f}%", font_size=14)
+        staffing_bar = arcade.gui.UIProgressBar2(value=self.building.staffing)
+        cash_reserves_bar = arcade.gui.UIProgressBar2(value=self.building.cash_reserves)
+        productivity_chart = arcade.gui.UILabel(text=f"Productivity: {self.building.productivity}", font_size=14)
         box1.add(building_icon, anchor_x="left", anchor_y="center", align_x=10)
-        #box1.add(staffing_bar, anchor_x="center", anchor_y="center")
-        #box1.add(cash_reserves_bar, anchor_x="center", anchor_y="center")
+        box1.add(staffing_bar, anchor_x="center", anchor_y="center")
+        box1.add(cash_reserves_bar, anchor_x="center", anchor_y="center")
         box1.add(productivity_chart, anchor_x="right", anchor_y="center", align_x=-10)
         self.info_column.add(box1)
 
@@ -53,12 +50,12 @@ class BuildingGUI(GenericMenu):
         input_box = arcade.gui.UIBoxLayout(size_hint=(0.5, 1), vertical=True, space_between=5)
         input_label = arcade.gui.UILabel(text="Inputs:", font_size=14)
         input_box.add(input_label)  
-        for input_good, amount in self.building.input_requirements.items():
+        for input_good, amount in self.building.inputs.items():
             good_icon = self.asset_manager.resource_icons.get(input_good, self.asset_manager.resource_icons["default"])
             good_widget = arcade.gui.UIBoxLayout(size_hint=(1, 0.2), vertical=False, space_between=5)
             good_widget.with_border()
             icon_image = arcade.gui.UIImage(texture=good_icon, width=32, height=32)
-            good_name = arcade.gui.UILabel(text=f"{input_good}: {amount} for ${cost}", font_size=12)
+            #good_name = arcade.gui.UILabel(text=f"{input_good}: {amount} for ${cost}", font_size=12)
             good_widget.add(icon_image)
             good_widget.add(good_name)
             input_box.add(good_widget)
@@ -69,7 +66,7 @@ class BuildingGUI(GenericMenu):
         output_box = arcade.gui.UIBoxLayout(size_hint=(0.5, 1), vertical=True, space_between=5)
         output_label = arcade.gui.UILabel(text="Outputs:", font_size=14)
         output_box.add(output_label)
-        for output_good, amount in self.building.output_products.items():
+        for output_good, amount in self.building.outputs.items():
             good_icon = self.asset_manager.resource_icons.get(output_good, self.asset_manager.resource_icons["default"])
             good_widget = arcade.gui.UIBoxLayout(size_hint=(1, 0.2), vertical=False, space_between=5)
             good_widget.with_border()
@@ -78,10 +75,10 @@ class BuildingGUI(GenericMenu):
             good_widget.add(icon_image)
             good_widget.add(good_name)
             output_box.add(good_widget)
-        balance_label = arcade.gui.UILabel(text=f"Profit per cycle: ${self.building.calculate_profit_per_cycle():.2f}", font_size=12)
+        balance_label = arcade.gui.UILabel(text=f"Profit per cycle: ${self.building.profit}", font_size=12)
         output_box.add(balance_label)
-        throughput_label = arcade.gui.UILabel(text=f"Throughput: {self.building.get_throughput():.1f} units/cycle", font_size=12)
-        output_box.add(throughput_label)
+        #throughput_label = arcade.gui.UILabel(text=f"Throughput: {self.building.get_throughput():.1f} units/cycle", font_size=12)
+        #output_box.add(throughput_label)
 
         box2.add(input_box)
         box2.add(output_box)
@@ -93,14 +90,61 @@ class BuildingGUI(GenericMenu):
         box3.with_background(color=arcade.color.DARK_BLUE_GRAY)
         box3.with_border()
 
-        owner_label = arcade.gui.UILabel(text=f"Owner: {self.building.owner.name}", font_size=14)
-        upgrade_label = arcade.gui.UILabel(text=f"Upgrades: {len(self.building.upgrades)}/{self.building.max_upgrades}", font_size=14)
-        box3.add(owner_label)
-        box3.add(upgrade_label)
+        #owner_label = arcade.gui.UILabel(text=f"Owner: {self.building.owner.name}", font_size=14)
+        #upgrade_label = arcade.gui.UILabel(text=f"Upgrades: {len(self.building.upgrades)}/{self.building.max_upgrades}", font_size=14)
+        #box3.add(owner_label)
+        #box3.add(upgrade_label)
         self.info_column.add(box3)
+
+    def on_daily_update(self):
+        if self.manager.enabled and self.building:
+            pass  # For future daily updates if needed
+
 
     def open_window(self, building):
         self.building = building
         self.title_label.text = f"Building: {building.name}"
         self.setup_content()
         self.manager.enable()
+
+class Progressbar2(arcade.gui.UIAnchorLayout):
+    """A custom progress bar widget.
+
+    A UIAnchorLayout is a layout that arranges its children in a specific way.
+    The actual bar is a UISpace that fills the parent widget from left to right.
+    """
+
+    value = arcade.gui.Property(0.0)
+
+    def __init__(
+        self,
+        value: float = 1.0,
+        width=100,
+        height=20,
+        color = arcade.color.GREEN,
+    ) -> None:
+        super().__init__(
+            width=width,
+            height=height,
+            size_hint=None,  # disable size hint, so it just uses the size given
+        )
+        self.with_background(color=arcade.uicolor.GRAY_CONCRETE)
+        self.with_border(color=arcade.uicolor.BLACK)
+
+        self._bar = arcade.gui.UISpace(
+            color=color,
+            size_hint=(value, 1),
+        )
+        self.add(
+            self._bar,
+            anchor_x="left",
+            anchor_y="top",
+        )
+        self.value = value
+
+        # update the bar when the value changes
+        arcade.gui.bind(self, "value", self._update_bar)
+
+    def _update_bar(self):
+        self._bar.size_hint = (self.value, 1)
+        self._bar.visible = self.value > 0

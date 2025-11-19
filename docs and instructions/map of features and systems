@@ -1,0 +1,19 @@
+"""
+Economy loop:
+Each nation calls for colony in [colonies]:
+    update economy()
+
+    For each colony, update loop:
+        1. run labor market
+        2. operate buildings
+        3. pops update loop:
+            a. receive wages
+            b. pay taxes
+            c. spend money
+            d. TODO: update political simulation
+        4. update market simulation
+        5. track and log stats in BLS and related systems
+    nation synchronize_markets() # This collects and aggregates market data from all colonies
+    TODO: nation synchronize and process political simulation
+
+Political loop does not yet exist whatsoever.
