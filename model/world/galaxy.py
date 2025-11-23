@@ -186,6 +186,20 @@ class Galaxy:
             print(f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
             system.assign_capital(nation)
 
+    def on_update(self, time_delta):
+        for system in self.solar_systems:
+            system.on_update(time_delta)  
+
+    def on_daily_update(self):
+        pass
+        #for system in self.solar_systems:
+            #system.on_daily_update()
+
+    def on_monthly_update(self):
+        pass
+        #for system in self.solar_systems:
+            #system.on_monthly_update()
+
 
 class GalaxyStar:
     def __init__(self, name, x, y, color, radius, solar_system):

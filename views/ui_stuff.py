@@ -16,6 +16,7 @@ class PersistentUI:
         # --- Sub-Components ---
         # all of these must be added to both draw and update
         self.planet_menu = PlanetMenu(self, self.asset_manager)
+        self.building_gui = BuildingGUI(self, self.asset_manager)
         self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
         self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
         
@@ -76,6 +77,7 @@ class PersistentUI:
     def draw(self):
         self.manager.draw()
         self.planet_menu.draw()
+        self.building_gui.draw()
         self.market_gui.draw()
 
     def on_monthly_update(self):
@@ -94,6 +96,7 @@ class PersistentUI:
     def on_daily_update(self):
         self.date.text = self.game_model.calendar.__str__()
         self.planet_menu.on_daily_update()
+        self.building_gui.on_daily_update()
         self.right_ledger.update(self.player_nation)
         self.market_gui.on_daily_update()
 
@@ -102,6 +105,9 @@ class PersistentUI:
 
     def show_market_gui(self):
         self.market_gui.open_window(self.player_nation.national_market)
+
+    def show_building_gui(self, building):
+        self.building_gui.open_window(building)
 
 class GalaxyStarLabel:
     def __init__(self, body, text_sprite_list, bg_sprite_list):
@@ -127,6 +133,17 @@ class GalaxyStarLabel:
         scale_factor = 1 / camera_zoom
         self.background.scale = scale_factor
         self.text.scale = scale_factor
+
+# Solar system UI elements and sprites
+class CelestialBodySprite(arcade.SpriteCircle):
+    def __init__(self, body):
+        super().__init__(body.size, body.color)
+        self.model_reference = body
+
+    def update(self, delta_time: float = 1/60):
+        body_pos = self.model_reference.get_position()
+        self.center_x = body_pos[0]
+        self.center_y = body_pos[1]
 
 class CelestialBodyLabel:
     def __init__(self, body, spritelist):

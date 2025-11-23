@@ -12,6 +12,7 @@ class Calendar:
         self.time_per_game_day = 1  # 1 second in real time = in day in game
         self.time_since_last_update = 0.00
 
+        self.regular_observers = [] # Observers that get notified every update tick
         self.daily_observers = []
         self.monthly_observers = []
 
@@ -32,6 +33,8 @@ class Calendar:
 
     def update(self, delta_time):
         """Process the real time for the calendar"""
+        for observer in self.regular_observers:
+            observer.on_update(delta_time)
         self.time_since_last_update += delta_time
         while self.time_since_last_update >= self.time_per_game_day:
             self.advance_day()
@@ -48,3 +51,6 @@ class Calendar:
         if observer not in self.monthly_observers:
             self.monthly_observers.append(observer)
 
+    def add_regular_observer(self, observer):
+        if observer not in self.regular_observers:
+            self.regular_observers.append(observer)

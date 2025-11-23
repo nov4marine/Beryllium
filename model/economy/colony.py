@@ -121,7 +121,7 @@ class Colony:
                 job.update_statistics()
 
     def setup_capital(self):
-        print(f"capital deployed on planet {self.planet.name}. Nation color is {self.owner.color}")
+        print(f"capital deployING on planet {self.planet.name}. Nation color is {self.owner.color}")
         self.buildings = [
             MineralExtractor(self, levels=3),
             EnergyPlant(self, levels=3),
@@ -376,7 +376,8 @@ class Pop:
         consumption = {}
         for good, params in NEEDS_PARAMETERS.items():
             base_need, alpha, beta = params
-            consumption[good] = base_need + (alpha * (self.wealth ** beta))
+            safe_wealth = max(self.wealth, 1)  # prevent negative and zero wealth, which apparently causes issues
+            consumption[good] = base_need + (alpha * (safe_wealth ** beta))
         self.needs = consumption
 
     def fulfill_needs(self, market):

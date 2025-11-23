@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel
+from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite
 
 
 
@@ -68,11 +68,7 @@ class SolarSystemView(arcade.View):
     def setup(self):
         # --- Celestial Body Sprite Setup ---
         for body in self.solar_system.bodies:
-            celestial_sprite = arcade.SpriteCircle(body.size, body.color)
-            body_pos = body.get_position()
-            celestial_sprite.center_x = body_pos[0]
-            celestial_sprite.center_y = body_pos[1]
-            celestial_sprite.model_reference = body
+            celestial_sprite = CelestialBodySprite(body)
             self.celestial_bodies.append(celestial_sprite)
 
         # --- Planet Labels ---
@@ -214,7 +210,7 @@ class SolarSystemView(arcade.View):
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.map_camera.zoom *= 1.1 if scroll_y > 0 else 0.9
-        self.map_camera.zoom = max(0.1, min(self.map_camera.zoom, 5.0))  # Limit zoom level
+        self.map_camera.zoom = max(0.01, min(self.map_camera.zoom, 4.0))  # Limit zoom level
 
         for label in self.planet_labels:
             label.update(self.map_camera.zoom)

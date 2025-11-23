@@ -33,14 +33,14 @@ class SolarSystem:
         bodies.append(star)
 
         # --- Generate planets ---
-        num_planets = random.randint(4, 12)  # Random number of planets
+        num_planets = random.randint(4, 10)  # Random number of planets
         for i in range(num_planets):
-            orbital_radius = 600 * (1.5 ** i)
+            orbital_radius = 600 * ((i + 1) ** 1.8) # Exponential spacing. Orbital radius is distance from star. v1 is 600 * (1.5 ** i)
             distance_ratio = orbital_radius / 10000
-            planet_type = self.determine_planet_type(distance_ratio)
+            planet_type = self.determine_planet_type(distance_ratio) # "rocky", "gas", or "icy"
             size = random.randint(5, 10) if planet_type == "rocky" else random.randint(10, 20)
             color = None  # Let Planet class pick based on type, or randomize here
-            speed = random.uniform(0.5, 1.5) / orbital_radius * 0.5
+            speed = random.uniform(0.8, 1.2) / orbital_radius * 0.5
             angle = random.uniform(0, 2 * math.pi)
             name = f"{self.name} Planet {i + 1}"
             planet = Planet(
@@ -64,7 +64,7 @@ class SolarSystem:
             if planet_type == "rocky" and random.random() < 0.4:
                 num_moons = random.randint(1, 2)
                 for m in range(num_moons):
-                    moon_radius = planet.size * 3 + random.randint(10, 30)
+                    moon_radius = planet.size + 100 * (m + 1)
                     moon_angle = random.uniform(0, 2 * math.pi)
                     moon = Moon(
                         name=f"{planet.name} Moon {m + 1}",
@@ -79,9 +79,9 @@ class SolarSystem:
 
             # --- Optionally generate moons for gas giants ---
             if planet_type == "gas" and random.random() < 0.8:
-                num_moons = random.randint(1, 8)
+                num_moons = random.randint(1, 4)
                 for m in range(num_moons):
-                    moon_radius = planet.size * 3 + random.randint(10, 30)
+                    moon_radius = planet.size + 100 * (m + 1)
                     moon_angle = random.uniform(0, 2 * math.pi)
                     moon = Moon(
                         name=f"{planet.name} Moon {m + 1}",
@@ -136,7 +136,7 @@ class SolarSystem:
         ]
         return random.choices(["rocky", "gas", "icy"], weights=weights, k=1)[0]
 
-    def update(self, time_delta):
+    def on_update(self, time_delta):
         for body in self.bodies:
             body.update_orbit(time_delta)
 
@@ -204,7 +204,7 @@ class CelestialBody:
             setattr(self, k, v)
 
     def update_orbit(self, time_delta):
-        self.angle += self.speed * time_delta
+        self.angle += self.speed * time_delta 
         self.angle %= 2 * math.pi
 
     def get_position(self):

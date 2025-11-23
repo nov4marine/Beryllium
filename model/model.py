@@ -28,6 +28,10 @@ class GameModel:
         print("Initializing new game...")
 
         self.galaxy = Galaxy()
+        # Add the galaxy to receive calendar updates both daily and monthly
+        self.calendar.add_daily_observer(self.galaxy)
+        self.calendar.add_monthly_observer(self.galaxy)
+        self.calendar.add_regular_observer(self.galaxy)
 
         # Setup Nations 
         self.player_nation = Nation(name="UNE")
@@ -62,6 +66,7 @@ class GameModel:
         self.player_nation = nation
         self.galaxy.nations.append(nation)
 
+    # the two below are currently deprecated in favor of nation-level and object-level updates
     def on_monthly_update(self):
         """The monthly update loop for the game model."""
         for nation in self.nations:
