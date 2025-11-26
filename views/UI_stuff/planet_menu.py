@@ -35,6 +35,11 @@ class GenericMenu:
         self.content_frame = arcade.gui.UIAnchorLayout(size_hint=(1, 0.92))
         self.content_frame.with_background(color=arcade.color.LIGHT_GRAY)
         self.window.add(self.content_frame, anchor_y="bottom")
+
+        # List of content widgets that need daily updates
+        self.short_term_updatable_content = []  # List of content widgets that are specific to current tab and must be cleared on tab switch
+        self.long_term_updatable_content = []  # List of content widgets that persist across tabs, and should never be cleared
+
         #self.setup_content() # Populate content_frame
         # I'm realizing the above line may be better called when opening the window with specific data, allowing the menu to be created before data exists.
 
@@ -144,6 +149,7 @@ class PlanetMenu(GenericMenu):
     def show_summary_tab(self):
         self.grid.clear()  # Clear previous content
         self.current_tab = "Summary"
+        self.short_term_updatable_content.clear()
 
         # --- Box 1 --- Primary planet art and info with governor portrait and name
         self.box1()
@@ -218,12 +224,46 @@ class PlanetMenu(GenericMenu):
         box3.add(planet_sprite_box, anchor_x="right")
 
         # --- Box 4 --- Local market info
+
+        # Import MarketGoodWidget
+        from views.UI_stuff.market_gui import MarketGoodWidget
+        # End import
+
         box4 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Local market info
         box4.with_border()
         self.grid.add(box4, row=1, column=2, row_span=2)
 
+        frame = arcade.gui.UIBoxLayout(vertical=True, size_hint=(1, 1))
+        box4.add(frame)
+
+        # Box 4a - expensive goods
+        box4a = arcade.gui.UIBoxLayout(vertical=True, size_hint=(1, 0.5), space_between=2)
+        box4a.with_border(color=arcade.color.STEEL_BLUE)
+        expensive_market_label = arcade.gui.UILabel(text="Expensive Goods")
+        box4a.add(expensive_market_label)
+        for good in self.planet.local_market.get_expensive_goods(number=5):
+            #good_label = arcade.gui.UILabel(text=f"{good.name}: ${good.current_price}")
+            #box4a.add(good_label)
+            expensive_good_widget = MarketGoodWidget(good, self.asset_manager)
+            box4a.add(expensive_good_widget)
+            self.short_term_updatable_content.append(expensive_good_widget)
+
+        # Box 4b - cheap goods
+        box4b = arcade.gui.UIBoxLayout(vertical=True, size_hint=(1, 0.5), space_between=2, align="bottom")
+        box4b.with_border(color=arcade.color.STEEL_BLUE)
+        cheap_market_label = arcade.gui.UILabel(text="Cheap Goods")
+        box4b.add(cheap_market_label)
+        for good in self.planet.local_market.get_cheap_goods(number=5):
+            #good_label = arcade.gui.UILabel(text=f"{good.name}: ${good.current_price}")
+            #box4b.add(good_label)
+            cheap_good_widget = MarketGoodWidget(good, self.asset_manager)
+            box4b.add(cheap_good_widget)
+            self.short_term_updatable_content.append(cheap_good_widget)
+
         market_label = arcade.gui.UILabel(text="Local Market")
-        box4.add(market_label, anchor_y="top")
+        frame.add(market_label, anchor_y="top")
+        frame.add(box4a, anchor_y="top")
+        frame.add(box4b, anchor_y="bottom")
 
         # --- Box 5 --- Build queue
         box5 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Build queue
@@ -237,6 +277,8 @@ class PlanetMenu(GenericMenu):
     def show_economy_tab(self):
         self.grid.clear()  # Clear previous content
         self.current_tab = "Economy"
+        self.short_term_updatable_content.clear()
+
         self.grid = arcade.gui.UIGridLayout(size_hint=(1, 1), row_count=3, column_count=4)
         self.grid.with_background(color=arcade.color.CHARCOAL)
 
@@ -283,11 +325,18 @@ class PlanetMenu(GenericMenu):
         self.content_frame.add(self.grid)
 
     def on_daily_update(self):
+        if self.manager._enabled: # This doesn't necessarily need to be implemented unless there are performance issues. 
+            for content in self.short_term_updatable_content:
+                content.on_daily_update()
+            for content in self.long_term_updatable_content:
+                content.on_daily_update()
+
         if self.current_tab == "Summary":
             self.gdp_label.text = f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}"
             self.population_label.text = f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}"
             self.stability_label.text = f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}"
             self.unemployment_label.text = f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
+
             
 
 class BuildingWidget(arcade.gui.UITextureButton):

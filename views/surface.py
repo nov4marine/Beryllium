@@ -20,15 +20,18 @@ class Surface:
     def draw_surface(self, drawing, name, size):
         """Draw the surface and its contents."""
         object = drawing
+        pass
 
+    def draw_to_texture(name, size) -> arcade.Sprite:
         texture = arcade.Texture.create_empty(name, size)
 
         if not texture_atlas:
             texture_atlas = arcade.get_window().ctx.default_atlas
         texture_atlas.add(texture)
         with texture_atlas.render_into(texture) as fbo:
+            # include all drawing stuff here 
             fbo.clear(color=arcade.color.TRANSPARENT_BLACK)
-            object.draw()
+            
 
         return arcade.Sprite(
             texture,

@@ -247,3 +247,16 @@ class RightLedger:
         def on_click_planet_button(event):
             self.persistentui.show_planet_menu(colony)
 
+import math
+
+def draw_dashed_circle_outline(center_x, center_y, radius, color, border_width=2, num_dashes=100, dash_fraction=0.5):
+    angle_per_dash = 2 * math.pi / num_dashes
+    dash_angle = angle_per_dash * dash_fraction
+    for i in range(num_dashes):
+        start_angle = i * angle_per_dash
+        end_angle = start_angle + dash_angle
+        x1 = center_x + radius * math.cos(start_angle)
+        y1 = center_y + radius * math.sin(start_angle)
+        x2 = center_x + radius * math.cos(end_angle)
+        y2 = center_y + radius * math.sin(end_angle)
+        arcade.draw_line(x1, y1, x2, y2, color, border_width)

@@ -1,5 +1,7 @@
 import arcade
 from pathlib import Path
+
+
 class AssetManager:
     """
     A class to manage game assets like images and sounds.
@@ -88,6 +90,9 @@ class AssetManager:
             portraits[portrait_name] = arcade.load_texture(str(portrait))
         print(f"Loaded {len(portraits)} portraits.")
         return portraits
+    
+    def get_resource_icon(self, name):
+        return self.resource_icons.get(name, self.resource_icons["default"])
 
     def load_image(self, name, path):
         self.images[name] = arcade.load_texture(path)

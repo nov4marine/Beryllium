@@ -19,6 +19,7 @@ class Colony:
 
         self.stability = 100
         self.unemployed = 0
+
         self.local_bank = None
         self.local_market = Market()
         self.local_bls = LocalBLS(self)
@@ -33,7 +34,7 @@ class Colony:
 
     # Job assignment methods
     def assign_jobs_simple(self):
-        """
+        """DEPRACATED
         Directly assigns pops to job vacancies in order, without applications or splitting.
         All pops are treated as a single group for now.
         """
@@ -472,6 +473,12 @@ class LocalBLS:
         self.statistics["job_vacancies"] = total_vacancies
         self.statistics["buildings"] = len(self.colony.buildings)
         # GDP calculation can be added here based on production data
+        # gdp per capita
+        # profession breakdowns
+
+        # Publish statistics to colony
+        self.colony.population = total_population
+
 
     def update_statistics_dense(self):
         """A denser version using sum() with generator expressions for brevity. Not currently used, since clarity is preferred."""

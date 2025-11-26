@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite
+from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite, draw_dashed_circle_outline
 
 
 
@@ -130,6 +130,18 @@ class SolarSystemView(arcade.View):
                 )
             else:
                 pass
+
+        # Draw the edge of the solar system
+        star_pos = self.solar_system.bodies[0].get_position()
+        x, y = star_pos
+        draw_dashed_circle_outline(
+            center_x=x,
+            center_y=y,
+            radius=int(self.solar_system.solar_system_size),
+            color=arcade.color.ORANGE,
+            border_width=2/camera_zoom,
+        )
+
         # Draw all bodies (stars, planets, moons, asteroids)
         self.celestial_bodies.draw()
         

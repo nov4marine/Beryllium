@@ -12,7 +12,7 @@ class MarketGUI(GenericMenu):
         self.window.size_hint = (0.25, 0.8)
         self.window.center_x = 600
 
-        self.market_column = arcade.gui.UIBoxLayout(size_hint=(1, 1), vertical=True, space_between=10)
+        self.market_column = arcade.gui.UIBoxLayout(size_hint=(1, 1), vertical=True, space_between=2)
         self.content_frame.add(self.market_column)
 
     def setup_content(self):
@@ -22,7 +22,7 @@ class MarketGUI(GenericMenu):
             self.icons[good.name] = self.asset_manager.resource_icons.get(good.name, self.asset_manager.resource_icons["default"])
 
             # Add market goods widgets
-            good_widget = MarketGoodWidget(good, self)
+            good_widget = MarketGoodWidget(good, self.asset_manager, self)
             self.market_column.add(good_widget)
             print(f"Added widget for good: {good.name}")
 
@@ -35,19 +35,19 @@ class MarketGUI(GenericMenu):
     def on_daily_update(self):
         for child in self.market_column.children:
             if isinstance(child, MarketGoodWidget):
-                child.update()
+                child.on_daily_update()
 
 
 class MarketGoodWidget(arcade.gui.UIBoxLayout):
-    def __init__(self, good, market_ui, *args, **kwargs):
-        super().__init__(size_hint=(1, 0.1), vertical=False, space_between=10, *args, **kwargs)
+    def __init__(self, good, assets, *args, **kwargs):
+        super().__init__(size_hint=(1, 0.1), vertical=False, space_between=2, *args, **kwargs)
         self.good = good
-        self.market_ui = market_ui
-        self.icon = self.market_ui.icons[good.name]
+        self.assets = assets # asset manager reference
+        self.icon = self.assets.get_resource_icon(good.name)
         self.with_background(color=arcade.color.DARK_BLUE_GRAY)
         self.with_border()
 
-        self.good_label = arcade.gui.UILabel(text=f"{self.good.name}")
+        self.good_label = arcade.gui.UILabel(text=f"{self.good.name}", multiline=True)
         self.good_icon = arcade.gui.UIImage(texture=self.icon, width=32, height=32)
         self.price_label = arcade.gui.UILabel(text=f"Price: {self.good.current_price}")
         #self.price_chart = GraphWidget(title=f"{self.good.name} Price History", y_label="Price", x_label="Time", max_points=50)
@@ -61,7 +61,7 @@ class MarketGoodWidget(arcade.gui.UIBoxLayout):
         self.add(self.supply_label)
         self.add(self.demand_label)
 
-    def update(self):
+    def on_daily_update(self):
         self.price_label.text = f"Price: {self.good.current_price}"
         self.supply_label.text = f"Supply: {self.good.supply}"
         self.demand_label.text = f"Demand: {self.good.demand}"

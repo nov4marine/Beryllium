@@ -68,6 +68,16 @@ class Market:
         else:
             raise ValueError(f"Good '{good}' not found in market.")
         
+    def get_expensive_goods(self, number=5):
+        """Return a list of the n most expensive goods in the market."""
+        sorted_goods = sorted(self.goods.values(), key=lambda g: g.current_price, reverse=True)
+        return sorted_goods[:number]
+    
+    def get_cheap_goods(self, number=5):
+        """Return a list of the n cheapest goods in the market."""
+        sorted_goods = sorted(self.goods.values(), key=lambda g: g.current_price)
+        return sorted_goods[:number]
+        
     def on_monthly_update(self):
         self.reset_market_data()
         self.update_prices()

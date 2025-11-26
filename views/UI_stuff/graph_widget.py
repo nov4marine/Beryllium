@@ -123,3 +123,69 @@ class GraphWidget(arcade.gui.UIAnchorLayout):
 # graph.add_series("Minerals", color=(255, 215, 0))
 # graph.add_point("Minerals", 10.5)
 # self.content_frame.add(graph)
+
+
+import squarify  # pip install squarify
+
+class TreemapWidget(arcade.gui.UIAnchorLayout):
+    """
+    A simple treemap widget using squarify for layout.
+    """
+    def __init__(self, size=400, *args, **kwargs):
+        super().__init__(width=size, height=size, *args, **kwargs)
+        self.width = size
+        self.height = size
+
+    def on_daily_update(self, values, labels, colors):
+        """Call this method to update the treemap data daily."""
+        self.values = values # list of numbers
+        self.labels = labels # list of strings
+        self.colors = colors # list of arcade colors or (R,G,B) tuples
+        self.rects = squarify.squarify(values, 0, 0, self.width, self.height)
+
+    def on_draw(self):
+        if not hasattr(self, 'rects'):
+            return  # No data to draw yet
+        for rect, label, color in zip(self.rects, self.labels, self.colors):
+            arcade.draw_lrbt_rectangle_filled(
+                rect['x'], rect['x'] + rect['dx'], 
+                rect['y'], rect['y'] + rect['dy'],
+                color
+            )
+            # Draw label (centered)
+            arcade.draw_text(
+                label,
+                rect['x'] + 4, rect['y'] + rect['dy'] / 2,
+                arcade.color.WHITE, 12, rect['dx'] - 8,
+                anchor_y="center"
+            )
+
+
+def draw_treemap(x, y, width, height, values, labels, colors):
+    # values: list of numbers
+    # labels: list of strings
+    # colors: list of arcade colors or (R,G,B) tuples
+    rects = squarify.squarify(values, x, y, width, height)
+    for rect, label, color in zip(rects, labels, colors):
+        arcade.draw_lrbt_rectangle_filled(
+            rect['x'], rect['x'] + rect['dx'], 
+            rect['y'], rect['y'] + rect['dy'],
+            color
+        )
+        # Draw label (centered)
+        arcade.draw_text(
+            label,
+            rect['x'] + 4, rect['y'] + rect['dy'] / 2,
+            arcade.color.WHITE, 12, rect['dx'] - 8,
+            anchor_y="center"
+        )
+
+# Example usage in your on_draw:
+#values = [53, 18, 17, 4, 3, 3, 2, 1, 1]
+#labels = ["Asia", "North America", "Europe", "Africa", "South America", "Oceania", "Other", "Other2", "Other3"]
+#colors = [
+#    arcade.color.RED, arcade.color.GREEN, arcade.color.YELLOW_ORANGE,
+#    arcade.color.BLUE, arcade.color.LIGHT_GREEN, arcade.color.LIGHT_GRAY,
+#    arcade.color.BROWN, arcade.color.PURPLE, arcade.color.ORANGE
+#]
+#draw_treemap(100, 100, 600, 400, values, labels, colors)
