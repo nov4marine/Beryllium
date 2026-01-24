@@ -3,29 +3,27 @@ from model.politics.nation import Nation
 from model.world.calendar import Calendar
 
 
-class GameModel:
+class GameWorld:
+    """The core game model, containing all major game entities and managing the game state."""
     def __init__(self):
         # --- Core Game Attributes ---
         self.calendar = Calendar(self)
-        self.game_paused = False
 
         # --- Major Game Entities ---
         self.galaxy = None
-        self.nations = []
+        self.nations = [] # List of all nations in the game
         self.player_nation = None
         # Future class to log units, tech, star systems, etc.?
 
         # --- Player and AI ---
         self.player_nation = None
-        self.selected_object = None
-        self.current_solar_system = None
 
         # --- Configuration/Rules? (can be loaded from data files) ---
         # self.game_rules = data.load_game_rules() # Example: difficulty, game length, resource types
 
     def initialize_new_game(self):
-        """Transition from the menus to actual gameplay in the world."""
-        print("Initializing new game...")
+        """Transition from a blank model to a new game state. Begin simulation."""
+        print("Initializing Simulation...")
 
         self.galaxy = Galaxy()
         # Add the galaxy to receive calendar updates both daily and monthly
@@ -76,3 +74,57 @@ class GameModel:
         """The daily update loop for the game model."""
         for nation in self.nations:
             nation.on_daily_update()
+
+# --- Command Handling from Client --- Asyncio ---
+
+    async def handle_client_command_deprecated(self, command_data: dict) -> dict:
+        """Processes a command dictionary received from the Godot client."""
+        
+        command = command_data.get("command")
+        
+        # We need a reference to the player's Nation object for validation
+        player_nation = self.player_nation 
+        
+        if not player_nation:
+            return {"status": "ERROR", "response_to": command, "message": "Game not initialized."}
+
+        # --- A critical first command for the client ---
+        if command == "GET_INITIAL_STATE":
+            # Godot client asks for the map data right after connecting.
+            # You must return a fully serializable dictionary containing ALL
+            # data needed for the client to draw the galaxy (star positions, hyperlanes, etc.)
+            
+            # NOTE: You will need a custom function to convert your Galaxy/Nation objects 
+            # into simple Python dictionaries/lists for JSON to handle.
+            return {
+                "status": "OK",
+                "response_to": "GET_INITIAL_STATE",
+                "calendar": str(self.calendar),
+                "galaxy_summary": f"Galaxy has {len(self.galaxy.solar_systems)} stars.",
+                "player_name": player_nation.name,
+                "player_resources": player_nation.resources # Assuming you add a resource attribute to Nation
+            }
+        
+        # --- Example Player Action Command ---
+        elif command == "BUILD_UNIT":
+            unit_type = command_data.get("unit_type")
+            system_id = command_data.get("location_id")
+            
+            # 1. Validation/Logic: Check if the player has resources, etc.
+            # Example: cost = 100 
+            # if player_nation.can_afford(cost):
+            #     # 2. Authoritative State Change
+            #     player_nation.deduct_resources(cost)
+            #     self.galaxy.spawn_unit(unit_type, system_id, player_nation)
+            
+            return {
+                "status": "OK",
+                "response_to": "BUILD_UNIT",
+                "log": f"Built command for {unit_type} received."
+            }
+            
+        # --- Add all other player commands here (e.g., "MOVE_FLEET", "END_TURN") ---
+
+        else:
+            return {"status": "ERROR", "response_to": command, "message": f"Unknown command: {command}"}
+
