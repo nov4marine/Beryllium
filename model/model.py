@@ -3,7 +3,7 @@ from model.politics.nation import Nation
 from model.world.calendar import Calendar
 
 
-class GameWorld:
+class GameModel:
     """The core game model, containing all major game entities and managing the game state."""
     def __init__(self):
         # --- Core Game Attributes ---
