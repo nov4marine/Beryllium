@@ -10,9 +10,10 @@ class Calendar:
 
         # New Properties for time tracking
         self.time_per_game_day = 1  # 1 second in real time = in day in game
+        self.time_per_tick = 0.1  # Duration of each "live" tick in real time seconds
         self.time_since_last_update = 0.00
 
-        self.regular_observers = [] # Observers that get notified every update tick
+        self.live_observers = [] # Observers that get notified every update tick
         self.daily_observers = []
         self.monthly_observers = []
 
@@ -30,12 +31,15 @@ class Calendar:
             if self.month > 12:
                 self.month = 1
                 self.year += 1
+        
+        self.current_date = self.__str__()
+        print(f"{self.current_date} ⚙️ Day Advanced.")
 
-    def update(self, delta_time):
+    def update(self):
         """Process the real time for the calendar"""
-        for observer in self.regular_observers:
-            observer.on_update(delta_time)
-        self.time_since_last_update += delta_time
+        for observer in self.live_observers:
+            observer.on_live_update()
+        self.time_since_last_update += self.time_per_tick
         while self.time_since_last_update >= self.time_per_game_day:
             self.advance_day()
             self.time_since_last_update -= self.time_per_game_day
@@ -51,6 +55,6 @@ class Calendar:
         if observer not in self.monthly_observers:
             self.monthly_observers.append(observer)
 
-    def add_regular_observer(self, observer):
-        if observer not in self.regular_observers:
-            self.regular_observers.append(observer)
+    def add_live_observer(self, observer):
+        if observer not in self.live_observers:
+            self.live_observers.append(observer)

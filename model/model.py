@@ -1,6 +1,7 @@
 from model.world.galaxy import Galaxy
 from model.politics.nation import Nation
 from model.world.calendar import Calendar
+from model.base import catalog
 
 
 class GameModel:
@@ -8,6 +9,7 @@ class GameModel:
     def __init__(self):
         # --- Core Game Attributes ---
         self.calendar = Calendar(self)
+        self.catalog = None  # Will be set to the global catalog instance
 
         # --- Major Game Entities ---
         self.galaxy = None
@@ -24,12 +26,13 @@ class GameModel:
     def initialize_new_game(self):
         """Transition from a blank model to a new game state. Begin simulation."""
         print("Initializing Simulation...")
+        self.catalog = catalog  # Use the global catalog instance
 
         self.galaxy = Galaxy()
         # Add the galaxy to receive calendar updates both daily and monthly
         self.calendar.add_daily_observer(self.galaxy)
         self.calendar.add_monthly_observer(self.galaxy)
-        self.calendar.add_regular_observer(self.galaxy)
+        self.calendar.add_live_observer(self.galaxy)
 
         # Setup Nations 
         self.player_nation = Nation(name="UNE")

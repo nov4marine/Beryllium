@@ -1,10 +1,14 @@
 from model.economy.market import Market
+from model.base import get_unique_id, catalog
 
 
 class Colony:
     """mega class to represent a colonized world"""
-
+    catalog_type = "colonies"
     def __init__(self, planet, owner, name):
+        self.id = get_unique_id()
+        catalog.register(self)
+
         self.planet = planet  # Reference to which planet it is on
         self.owner = owner  # Owning nation
         self.name = name  # Name of colonized world
@@ -153,6 +157,21 @@ class Colony:
         total_population = sum(pop.size for pop in self.pops)
         print(f"Colony {self.name} initialized with {len(self.buildings)} buildings and population {total_population}.")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "planet": self.planet.name,
+            "planet_id": self.planet.id,
+            "owner": self.owner.name,
+            "owner_id": self.owner.id,
+            "name": self.name,
+            "population": sum(pop.size for pop in self.pops),
+            "buildings": [building.id for building in self.buildings],
+            "pops": [pop.id for pop in self.pops],
+            "stats": self.local_bls.statistics, # already a dict
+            # add more fields as needed
+        }
+
         # Goals for building/job operating logic:
     # A. Staffing:
     # 1. By default, buildings should attempt to stay fully staffed at all times.
@@ -174,9 +193,11 @@ class Colony:
 
 class Building:
     """A building on a colony, which can produce goods and services, employ pops, and generate profit"""
+    catalog_type = "buildings"
+    def __init__(self, name, construction_cost, construction_time, upkeep, inputs, outputs, geography=None, jobs=None, levels=0, colony=None):
+        self.id = get_unique_id()
+        catalog.register(self)
 
-    def __init__(self, name, construction_cost, construction_time, upkeep, inputs, outputs, geography=None, jobs=None,
-                 levels=0, colony=None):
         self.name = name
         self.construction_cost = construction_cost
         self.construction_time = construction_time
@@ -258,9 +279,36 @@ class Building:
         total_employees = sum(job.employees for job in self.jobs)
         self.productivity = (self.profit + self.balance_sheet["expenses"].get("wages", 0)) / total_employees if total_employees > 0 else 0
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "construction_cost": self.construction_cost,
+            "construction_time": self.construction_time,
+            "geography": self.geography,
+            "upkeep": self.upkeep,
+            "inputs": self.inputs,
+            "outputs": self.outputs,
+            "levels": self.levels,
+            "jobs": [job.to_dict() for job in self.jobs],
+            "revenue": self.revenue,
+            "expenses": self.expenses,
+            "profit": self.profit,
+            "productivity": self.productivity,
+            "staffing": self.staffing,
+            "colony": self.colony.name,
+            "colony_id": self.colony.id,
+
+            # add more fields as needed
+        }
+
 
 class Job:
+    catalog_type = "jobs"
     def __init__(self, profession, max_quantity, employer, wage=10, qualifications=None):
+        self.id = get_unique_id()
+        catalog.register(self)
+
         self.profession = profession
         self.max_quantity = max_quantity  # maximum number of jobs in this position
         self.employees = 0  # Total number of individuals
@@ -332,10 +380,31 @@ class Job:
             print(f"Warning: Job {self.profession} has inconsistent vacancy count! Employees: {self.employees}, Vacancies: {self.vacancies}, Max: {self.max_quantity}")
             self.vacancies = self.max_quantity - self.employees
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "profession": self.profession,
+            "max_quantity": self.max_quantity,
+            "employees": self.employees,
+            "vacancies": self.vacancies,
+            "wage": self.wage,
+            "employer": self.employer.name,
+            "employer_id": self.employer.id,
+            "hiring": self.hiring,
+            "openings": self.openings,
+            "assigned_pops": [pop.id for pop in self.assigned_pops],
+            # add more fields as needed
+        }
 
 
 class Pop:
+    """A population unit within a colony, representing an aggregate group of individuals with shared characteristics."""
+    catalog_type = "pops"
     def __init__(self, colony, size, current_job=None):
+        self.id = get_unique_id()
+        catalog.register(self)
+        
+        self.species = "Human"  # For now, all pops are human
         self.colony = colony
         self.size = size
         self.current_job = current_job
@@ -406,6 +475,20 @@ class Pop:
         new_pop.wealth = self.wealth
         self.colony.pops.append(new_pop)
         return new_pop
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "species": self.species,
+            "size": self.size,
+            "current_job": self.current_job.profession if self.current_job else None,
+            "current_job_id": self.current_job.id if self.current_job else None,
+            "wage": self.wage,
+            "wealth": self.wealth,
+            "colony": self.colony.name,
+            "colony_id": self.colony.id,
+            # add more fields as needed
+        }
 
 
 class LocalBLS:

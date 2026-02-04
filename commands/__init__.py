@@ -7,5 +7,7 @@ from .base import COMMAND_MAP, register_command
 # This "wakes up" the decorators in those files.
 from . import military
 from . import economy
+from . import misc
+# (add more imports here as you create more command files)
 
 # Now, any other file can just do 'from commands import COMMAND_MAP'
