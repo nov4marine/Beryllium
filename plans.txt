@@ -1,0 +1,22 @@
+Okay, for the primary game loop between Godot and Python:
+
+1. Godot boots up. 
+2. Godot commands server to boot but not load universe.
+3. Stuff happens in Godot to set up game params
+4. Godot tells Python to boot up a universe
+5. Godot moves to "game mode" where it plays
+
+
+When Python sets up a universe:
+
+1. Godot sends a command to python to create the world
+1.5 (starts in either galaxy or solar system)
+2. Python gives green light that creation is complete
+4. Godot sends command to request *setup data* for starting view, and to begin update pulse
+5. Python then sends view setup data, and begins pulse. 
+
+- Every time a view is changed, Godot sends command to tell python. 
+Python then sends setup data, marked as such, and begins new update pulse
+
+Godot communicates exclusively in the form of commands, which will be expanded as needed for miscellaneous cases. 
+Python packet subtypes: update, command response, 
