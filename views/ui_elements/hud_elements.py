@@ -110,10 +110,7 @@ class TopBar(UIAnchorLayout):
         
         @self.display.event("on_click")
         def on_click_calendar(event):
-            print("Calendar clicked!")
-            # For now, just advance the calendar by one day when clicked, to test daily updates.
-            self.persistentui.calendar.advance_day()
-            # Wow this ^ works! Clicking the date advances the calendar and triggers daily updates across the UI. Feels good.
+            self.persistentui.calendar.toggle_pause()  # Toggle pause to allow manual advancement of time without the calendar automatically advancing every second.
 
         # Add Calendar
         self.add(self.display, anchor_x="right")
