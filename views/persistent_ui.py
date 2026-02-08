@@ -3,24 +3,46 @@ import arcade.gui
 from views.UI_stuff.planet_menu import PlanetMenu, BuildingGUI
 from views.UI_stuff.market_gui import MarketGUI
 
+"""
+Master UI class that contains all the elements that persist across views, such as the resource bar, date, and any other HUD elements.
+Hook this up to the calendar and keep it persistent outside of views. 
+Core things to remember/do: 
+1. Keep route all GUI updates through this class, and have the calendar update it daily ONLY. (maybe per frame later)
+2. The strategy for now is to create the framework/class for every UI menu upon initialization, and thus be able to be created without reference to what it'll be displaying.
+2.5. Also every menu must have a on_open and/or refresh method for changing which object the menu is displaying (eg which planet or building)
+3. I need to learn how to make a scrollable gui container for a shitload of stuff.
+
+4. Using the new branch mechanic of git, learn to make a new branch for each game feature, and do not merge until the feature is robust (but partially implemented is fine).
+4.5 Always lean on the side of simplicity and UNDER-complicating. My code is full of 20 half baked, overly ambitious features that don't play well together.
+
+5. I also need to reorganize the files sometime. This file being named ui_stuff is already bad, but worse because the folder is also named ui_stuff.
+"""
 
 class PersistentUI:
-    """Baiscally the primary GUI that is always on screen, or has elements that persist across views"""
+    """
+    Baiscally the primary GUI that is always on screen, or has elements that persist across views.
+    Serves as a sort of controller or container or manager for all various UI components, such as the resource bar, the planet menu, the market menu, and so on.
+    Also serves as the primary observer of the calendar, and thus the main conduit for updating the UI based on the passage of time.
+    #TODO: refactor calendar to be pauseable, but also still update UI changes even when paused. A core part of paradox games is pausing to do a bunch of micro.
+    """
     def __init__(self, game_model, asset_manager):
         self.game_model = game_model
+        self.calendar = game_model.calendar
         self.asset_manager = asset_manager
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
         self.player_nation = None
 
         # --- Sub-Components ---
-        # all of these must be added to both draw and update
-        self.planet_menu = PlanetMenu(self, self.asset_manager)
-        self.building_gui = BuildingGUI(self, self.asset_manager)
-        self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
-        self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
+        # all of these must be added to draw
+        #self.planet_menu = PlanetMenu(self.asset_manager)
+        #self.building_gui = BuildingGUI(self, self.asset_manager)
+        self.top_bar = None
+        #self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
+        #self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
+        #TODO: refactor to consolidate things like the resource bar/ top_bar into a subcomponent. This manager should not directly handle individual UI elements.
         
-        self.market_gui = MarketGUI(self.asset_manager)
+        #self.market_gui = MarketGUI(self.asset_manager)
 
         # --- HUD ---
         self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
@@ -30,6 +52,7 @@ class PersistentUI:
         self.root.add(self.resource_bar, anchor_y="top")
 
         # --- Create the top resource bar ---
+        #TODO: add a flag sprite that changes based on the player's nation, and also serves as a quick visual indicator.
         self.flag = arcade.gui.UISpace(color=arcade.color.RED, size_hint=(0.05, 1))
 
         self.resource_bar.add(self.flag, anchor_x="left")
@@ -67,18 +90,15 @@ class PersistentUI:
         self.stats.add(self.starbases)
 
         # --- Time ---
-        self.calendar = arcade.gui.UIAnchorLayout(size_hint=(0.1, 1))
+        self.calendar_ui = arcade.gui.UIAnchorLayout(size_hint=(0.1, 1))
         # self.calendar = arcade.gui.UISpriteWidget()
-        self.calendar.with_background(color=arcade.color.ARMY_GREEN)
-        self.date = arcade.gui.UILabel(text=self.game_model.calendar.__str__())
-        self.calendar.add(self.date)
-        self.resource_bar.add(self.calendar, anchor_x="right")
+        self.calendar_ui.with_background(color=arcade.color.ARMY_GREEN)
+        self.date = arcade.gui.UILabel(text=self.game_model.calendar.__str__(), font_size=18)
+        self.calendar_ui.add(self.date)
+        self.resource_bar.add(self.calendar_ui, anchor_x="right")
 
     def draw(self):
         self.manager.draw()
-        self.planet_menu.draw()
-        self.building_gui.draw()
-        self.market_gui.draw()
 
     def on_monthly_update(self):
         self.gdp.text = f"GDP: {self.player_nation.gdp}"
@@ -197,55 +217,6 @@ class PlanetLabel(CelestialBodyLabel):
         body.x = position[0]
         body.y = position[1]
         super().__init__(body, spritelist)
-
-class LeftSideBar:
-    def __init__(self, persistent_ui, manager, asset_manager):
-        self.persistent_ui = persistent_ui
-        self.manager = manager
-        self.assets = asset_manager
-        self.collapsed = True
-        self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
-        self.collapsed_panel = arcade.gui.UIBoxLayout(size_hint=(0.04, 0.5))
-        self.collapsed_panel.with_background(color=arcade.color.DARK_BLUE_GRAY)
-        # add widgets to collapsed panel
-        self.collapsed_button = arcade.gui.UIFlatButton(size_hint=(1, 1))
-
-        @self.collapsed_button.event("on_click")
-        def on_click_collapsed_button(event):
-            self.persistent_ui.show_market_gui()
-
-        self.collapsed_panel.add(self.collapsed_button)
-        self.root.add(self.collapsed_panel, anchor_x="left", anchor_y="center")
-
-
-class RightLedger:
-    def __init__(self, persistentui, manager, asset_manager):
-        self.persistentui = persistentui
-        self.manager = manager
-        self.assets = asset_manager
-        self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
-        self.ledger_panel = arcade.gui.UIBoxLayout(size_hint=(0.1, 0.7), space_between=5)
-        self.ledger_panel.with_background(color=arcade.color.DARK_GRAY)
-        self.root.add(self.ledger_panel, anchor_x="right", anchor_y="center")
-        # add widgets to ledger panel
-        self.ledger_title = arcade.gui.UILabel(text="Ledger", size_hint=(1, 0.01), align="center")
-        self.ledger_title.with_background(color=arcade.color.DARK_IMPERIAL_BLUE)
-        self.ledger_title.with_border()
-        self.ledger_panel.add(self.ledger_title)
-
-        self.planets = arcade.gui.UIBoxLayout(space_between=5)
-        self.ledger_panel.add(self.planets)
-
-    def update(self, nation):
-        self.planets.clear()
-        for colony in nation.colonies:
-            print(colony.name)
-            planet_button = arcade.gui.UIFlatButton(text=colony.name, width=150, height=30)
-            self.planets.add(planet_button)
-            
-        @planet_button.event("on_click")
-        def on_click_planet_button(event):
-            self.persistentui.show_planet_menu(colony)
 
 import math
 

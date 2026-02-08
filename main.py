@@ -2,9 +2,10 @@ import arcade
 from model.model import GameModel
 from views.galaxy_view import GalaxyView
 # from views.solar_system_view import SolarSystemView
-from views.ui_stuff import PersistentUI
+from views.persistent_ui import PersistentUI
 from model.assets import AssetManager
 
+asset_manager = AssetManager()
 
 class MyGame:
     def __init__(self):
@@ -26,11 +27,11 @@ class MyGame:
 
         # Window Components
         self.window.calendar = calendar
-        self.window.asset_manager = AssetManager()
-        self.window.persistent_ui = PersistentUI(self.game_model, self.window.asset_manager)
+        self.window.asset_manager = asset_manager
+        self.window.persistent_ui = PersistentUI(self.game_model, asset_manager)
 
-        calendar.add_daily_observer(self.window.persistent_ui)
-        calendar.add_monthly_observer(self.window.persistent_ui)
+        #calendar.add_daily_observer(self.window.persistent_ui)
+        #calendar.add_monthly_observer(self.window.persistent_ui)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()

@@ -17,3 +17,14 @@ Each nation calls for colony in [colonies]:
     TODO: nation synchronize and process political simulation
 
 Political loop does not yet exist whatsoever.
+
+Class structure: 
+nearly everything in the game falls within 1 giant hierarchy:
+- Galaxy
+    - Solar Systems
+        - Planets
+            - Colonies
+                - Buildings
+                    - Jobs
+                    - Pops
+                - Pops
