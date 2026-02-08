@@ -1,7 +1,5 @@
 import arcade
-import arcade.gui
 from model.model import GameModel
-from model.world.calendar import Calendar
 from views.galaxy_view import GalaxyView
 # from views.solar_system_view import SolarSystemView
 from views.ui_stuff import PersistentUI

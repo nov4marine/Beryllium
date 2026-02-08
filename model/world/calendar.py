@@ -6,8 +6,6 @@ class Calendar:
         self.month = start_month
         self.year = start_year
 
-        self.current_date = self.__str__()
-
         # New Properties for time tracking
         self.time_per_game_day = 1  # 1 second in real time = in day in game
         self.time_since_last_update = 0.00
@@ -15,6 +13,11 @@ class Calendar:
         self.regular_observers = [] # Observers that get notified every update tick
         self.daily_observers = []
         self.monthly_observers = []
+
+    @property
+    def current_date(self):
+        date = self.__str__()
+        return date
 
     def advance_day(self):
         self.day += 1
