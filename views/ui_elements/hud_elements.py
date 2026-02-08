@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from arcade.gui import UIAnchorLayout, UILabel
+from arcade.gui import UIAnchorLayout, UILabel, UIFlatButton
 
 class LeftSideBar:
     def __init__(self, persistent_ui, manager, asset_manager):
@@ -63,6 +63,7 @@ class TopBar(UIAnchorLayout):
 
         # Flag and added
         self.flag = arcade.gui.UISpace(color=arcade.color.RED, size_hint=(0.05, 1))
+    #TODO: add a flag sprite that actually uses the player's nation. Serves as a quick visual indicator.
         self.add(self.flag, anchor_x="left")
 
         # Core Stats Box and added
@@ -88,7 +89,7 @@ class TopBar(UIAnchorLayout):
         self.stats_box.add(self.population)
 
         # Space
-        space1 = arcade.gui.UISpace(size_hint=(0.05, 1), color=arcade.color.LIGHT_SKY_BLUE)
+        space1 = arcade.gui.UISpace(size_hint=(0.01, 1), color=arcade.color.LIGHT_SKY_BLUE)
         self.stats_box.add(space1)
 
         # Social
@@ -104,18 +105,21 @@ class TopBar(UIAnchorLayout):
         # Later add tech, starbases, etc.
 
         # Calendar
-        self.calendar_box = UIAnchorLayout(size_hint=(0.1, 1))
         # self.calendar_box = SpriteWidget() # later add calendar art to this
-        self.calendar_box.with_background(color=arcade.color.EMERALD)
-        self.display = UILabel(text="1.1.2200", font_size=18)
-        self.calendar_box.add(self.display)
-        #TODO: make calendar display into a button that pauses/plays.
+        self.display = UIFlatButton(text="1.1.2200", size_hint=(0.1, 1), font_size=18, bg=arcade.color.EMERALD)
+        
+        @self.display.event("on_click")
+        def on_click_calendar(event):
+            print("Calendar clicked!")
+            # For now, just advance the calendar by one day when clicked, to test daily updates.
+            self.persistentui.calendar.advance_day()
+            # Wow this ^ works! Clicking the date advances the calendar and triggers daily updates across the UI. Feels good.
 
         # Add Calendar
-        self.stats_box.add(self.calendar_box, anchor_x="right")
+        self.add(self.display, anchor_x="right")
 
     def on_daily_update(self):
-        date = self.persistentui.calendar.current_date()
+        date = self.persistentui.calendar.current_date
         self.display.text = date
         if self.player_nation is not None:
             try:
@@ -127,5 +131,6 @@ class TopBar(UIAnchorLayout):
                 self.standard_of_living.text = f"Standard of Living: {self.player_nation.standard_of_living}"
                 self.radicals.text = f"Radicals: {self.player_nation.radicals}"
                 self.loyalists.text = f"Loyalists: {self.player_nation.loyalists}"
+                print(f"Updated TopBar stats for {self.player_nation.name}")
             except Exception as e:
                 print(f"Error updating TopBar stats: {e}")

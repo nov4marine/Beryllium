@@ -1,7 +1,8 @@
 import arcade
 import arcade.gui
-from views.UI_stuff.planet_menu import PlanetMenu, BuildingGUI
-from views.UI_stuff.market_gui import MarketGUI
+#from views.UI_stuff.planet_menu import PlanetMenu, BuildingGUI
+#from views.UI_stuff.market_gui import MarketGUI
+from views.ui_elements.hud_elements import TopBar
 
 """
 Master UI class that contains all the elements that persist across views, such as the resource bar, date, and any other HUD elements.
@@ -37,88 +38,36 @@ class PersistentUI:
         # all of these must be added to draw
         #self.planet_menu = PlanetMenu(self.asset_manager)
         #self.building_gui = BuildingGUI(self, self.asset_manager)
-        self.top_bar = None
+        self.top_bar = TopBar(self, self.asset_manager)
         #self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
         #self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
         #TODO: refactor to consolidate things like the resource bar/ top_bar into a subcomponent. This manager should not directly handle individual UI elements.
         
         #self.market_gui = MarketGUI(self.asset_manager)
 
-        # --- HUD ---
+        # --- Root UI Layout which all subcomponents are added to ---
         self.root = self.manager.add(arcade.gui.UIAnchorLayout(size_hint=(1, 1)))
 
-        self.resource_bar = arcade.gui.UIAnchorLayout(size_hint=(1, 0.05))
-        self.resource_bar.with_background(color=arcade.color.DARK_IMPERIAL_BLUE)
-        self.root.add(self.resource_bar, anchor_y="top")
+        # --- Create HUD components ---
+        self.root.add(self.top_bar, anchor_y="top")
+        #self.root.add(self.left_sidebar, anchor_x="left", anchor_y="center")
+        #self.root.add(self.right_ledger, anchor_x="right", anchor_y="center")
 
-        # --- Create the top resource bar ---
-        #TODO: add a flag sprite that changes based on the player's nation, and also serves as a quick visual indicator.
-        self.flag = arcade.gui.UISpace(color=arcade.color.RED, size_hint=(0.05, 1))
-
-        self.resource_bar.add(self.flag, anchor_x="left")
-        # --- Stats ---
-        self.stats = arcade.gui.UIBoxLayout(vertical=False, size_hint=(0.95, 1))
-        self.gdp = arcade.gui.UILabel(text="GDP")
-        self.gdp_per_capita = arcade.gui.UILabel(text="GDP per capita")
-        self.population = arcade.gui.UILabel(text="Population")
-
-        self.stats.add(self.gdp)
-        self.stats.add(self.gdp_per_capita)
-        self.stats.add(self.population)
-
-        self.resource_bar.add(self.stats, anchor_x="right")
-        # education
-        self.standard_of_living = arcade.gui.UILabel(text="Standard of Living")
-        self.radicals = arcade.gui.UILabel(text="Radicals")
-        self.loyalists = arcade.gui.UILabel(text="Loyalists")
-        # --- Resources ---
-        self.bureaucracy = arcade.gui.UILabel(text="Bureaucracy")
-        self.authority = arcade.gui.UILabel(text="Authority")
-        self.treasury = arcade.gui.UILabel(text="Treasury")
-        # --- Other Stats ---
-        self.tech = arcade.gui.UILabel(text="Technology")
-        self.starbases = arcade.gui.UILabel(text="Starbases")
-        # military
-
-        self.stats.add(self.standard_of_living)
-        self.stats.add(self.radicals)
-        self.stats.add(self.loyalists)
-        self.stats.add(self.bureaucracy)
-        self.stats.add(self.authority)
-        self.stats.add(self.treasury)
-        self.stats.add(self.tech)
-        self.stats.add(self.starbases)
-
-        # --- Time ---
-        self.calendar_ui = arcade.gui.UIAnchorLayout(size_hint=(0.1, 1))
-        # self.calendar = arcade.gui.UISpriteWidget()
-        self.calendar_ui.with_background(color=arcade.color.ARMY_GREEN)
-        self.date = arcade.gui.UILabel(text=self.game_model.calendar.__str__(), font_size=18)
-        self.calendar_ui.add(self.date)
-        self.resource_bar.add(self.calendar_ui, anchor_x="right")
+    def set_player_nation(self, nation):
+        self.player_nation = nation
+        self.top_bar.player_nation = nation
 
     def draw(self):
         self.manager.draw()
 
     def on_monthly_update(self):
-        self.gdp.text = f"GDP: {self.player_nation.gdp}"
-        self.gdp_per_capita.text = f"GDP per capita: {self.player_nation.gdp_per_capita}"
-        self.population.text = f"Population: {self.player_nation.population}"
-
-        self.standard_of_living.text = self.player_nation.standard_of_living
-        self.loyalists.text = self.player_nation.loyalists
-        self.radicals.text = self.player_nation.radicals
-
-        self.bureaucracy.text = self.player_nation.bureaucracy
-        self.authority.text = self.player_nation.authority
-        self.treasury.text = self.player_nation.treasury
+        pass
 
     def on_daily_update(self):
-        self.date.text = self.game_model.calendar.__str__()
-        self.planet_menu.on_daily_update()
-        self.building_gui.on_daily_update()
-        self.right_ledger.update(self.player_nation)
-        self.market_gui.on_daily_update()
+        self.top_bar.on_daily_update()
+        #self.planet_menu.on_daily_update()
+        #self.building_gui.on_daily_update()
+        #self.right_ledger.update(self.player_nation)
 
     def show_planet_menu(self, colony):
         self.planet_menu.open_window(colony)

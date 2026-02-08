@@ -30,13 +30,16 @@ class MyGame:
         self.window.asset_manager = asset_manager
         self.window.persistent_ui = PersistentUI(self.game_model, asset_manager)
 
-        #calendar.add_daily_observer(self.window.persistent_ui)
+        calendar.add_daily_observer(self.window.persistent_ui)
         #calendar.add_monthly_observer(self.window.persistent_ui)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()
-        self.window.persistent_ui.player_nation = self.game_model.player_nation
+        player_nation = self.game_model.player_nation
+        self.window.persistent_ui.set_player_nation(player_nation)
+        
         self.galaxy_view = GalaxyView(game_model=self.game_model)
+
         self.main_menu_view = None
         
         self.window.show_view(self.galaxy_view)
