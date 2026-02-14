@@ -1,4 +1,4 @@
-from model.economy.market import Market
+from model.economy.market import Market, Inventory
 
 
 class Colony:
@@ -21,7 +21,7 @@ class Colony:
 
         self.local_bank = None
         self.local_stockpile = Inventory()
-        self.local_market = Market()
+        self.local_market = Market(self.local_stockpile)
         self.local_bls = LocalBLS(self)
 
     @property
@@ -156,6 +156,8 @@ class Building:
         self.jobs = jobs
         self.levels = levels
         self.colony = colony
+        # Inventory contribution is, per level, enough for 1 year of production at full staffing.
+        self.inventory_contribution = {good: quantity * 12 for good, quantity in outputs.items()}
 
         self.revenue = 0.0
         self.expenses = 0.0
@@ -175,6 +177,9 @@ class Building:
         self.levels += 1
         self.ownership[funder] += 1
         self.ownership["total"] += 1
+        # TODO: deduct construction cost from funder, and add initial inventory contribution to colony stockpile
+        output_good = self.outputs.keys()[0]  # Assuming single output for simplicity
+        self.colony.local_stockpile.contents[output_good]["capacity"] += self.inventory_contribution[output_good]
 
     def operate(self):
         """Operate the building for a tick, processing goods, paying wages, and allocating profits."""

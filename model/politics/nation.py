@@ -23,7 +23,7 @@ class Nation:
         self.authority = 0
         self.treasury = 1000
 
-        self.national_market = Market()
+        #self.national_market = Market()
 
     def initialize_nation(self):
         if self.capital is None:
