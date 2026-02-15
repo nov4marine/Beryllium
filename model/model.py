@@ -47,6 +47,14 @@ class GameModel:
         self.galaxy.deploy_nations(self.nations)
         #for nation in self.nations:
             #nation.initialize_nation()
+
+    def initialize_new_game3(self):
+        print("Initializing new game...")
+        # 1. Create galaxy
+        self.galaxy = Galaxy()
+        # 2. Create player nation
+        self.player_nation = Nation(name="Player Nation")
+        self.nations.append(self.player_nation)
     
     def initialize_new_game2(self):
         """TODO: A simplified new game initialization for testing purposes,
