@@ -7,15 +7,15 @@ from model.world.solar_system import SolarSystem
 
 
 class Galaxy:
-    def __init__(self, galaxy_size=6000, num_stars=1000):
+    def __init__(self, universe, galaxy_size=6000, num_stars=1000):
         """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
+        self.universe = universe # The builder needs the registry
         self.galaxy_size = galaxy_size # Maximum radius from center
         self.num_stars = num_stars
         self.galaxy_disk = None  # Placeholder for galactic disk image
 
         # Step 1: Generate stars, and their respective solar systems
-        self.galaxy_stars = self._generate_galaxy_stars(num_stars, galaxy_size)
-        self.solar_systems = [s.solar_system for s in self.galaxy_stars]
+        self._generate_galaxy_stars(num_stars, galaxy_size)
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
 
@@ -66,16 +66,21 @@ class Galaxy:
             color = random.choice(star_colors)
             name = f"star {i + 1}"
 
+            # Create the logic object
+            new_system = SolarSystem(name=name)
+            # Register the solar system in the universe, which gives it an ID automatically
+            system_id = self.universe.register_solar_system(new_system)
+
             star = GalaxyStar(
                 name=name,
                 x=x,
                 y=y,
                 color=color,
                 radius=radius,
-                solar_system=SolarSystem(name=name),
+                solar_system=system_id,
             )
-            stars.append(star)
-        return stars
+            stars.append(star) # I think this is necessary to run the distance check
+            self.universe.register_star(star, system_id)
 
     def generate_delaunay_hyperlanes(self, max_connections=3):
         points = [(star.x, star.y) for star in self.galaxy_stars]

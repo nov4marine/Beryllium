@@ -5,6 +5,7 @@ from model.world.calendar import Calendar
 
 class GameModel:
     def __init__(self):
+        self.universe = Universe() # The holy registry of truth.
         # --- Core Game Attributes ---
         self.calendar = Calendar(self)
         self.game_paused = False
@@ -13,7 +14,7 @@ class GameModel:
         self.galaxy = None
         self.nations = []
         self.player_nation = None
-        # Future class to log units, tech, star systems, etc.?
+        # Future classes to log units, tech, star systems, etc.?
 
         # --- Player and AI ---
         self.player_nation = None
@@ -27,14 +28,16 @@ class GameModel:
         """Transition from the menus to actual gameplay in the world."""
         print("Initializing new game...")
 
-        self.galaxy = Galaxy()
+        self.galaxy = Galaxy(universe=self.universe)
         # Add the galaxy to receive calendar updates both daily and monthly
-        self.calendar.add_daily_observer(self.galaxy)
-        self.calendar.add_monthly_observer(self.galaxy)
-        self.calendar.add_regular_observer(self.galaxy)
+
 
         # Setup Nations 
         self.player_nation = Nation(name="UNE")
+        nation_id = self.universe.get_uid()
+        self.player_nation.uid = nation_id
+        self.universe.nations[nation_id] = self.player_nation
+
         self.nations.append(self.player_nation)
 
         for nation in self.nations:
