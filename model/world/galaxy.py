@@ -4,17 +4,12 @@ import random
 import math
 import os
 from model.world.solar_system import SolarSystem
-from model.base import get_unique_id, catalog
 
 
 
 class Galaxy:
-    catalog_type = "galaxy"
     def __init__(self, galaxy_size=6000, num_stars=1000):
         """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
-        self.id = get_unique_id()
-        catalog.register(self)
-
         self.galaxy_size = galaxy_size # Maximum radius from center
         self.num_stars = num_stars
 
@@ -210,28 +205,8 @@ class Galaxy:
         #for system in self.solar_systems:
             #system.on_monthly_update()
 
-    def setup_dict(self):
-        return {
-            "galaxy_size": self.galaxy_size,
-            "num_stars": self.num_stars,
-            "stars": [star.setup_dict() for star in self.galaxy_stars],
-            "hyperlanes": [
-                {"from": star1.id, "to": star2.id}
-                for star1, star2 in self.hyperlanes
-            ],
-        }
-    
-    def to_dict(self):
-        return {
-            "stars": [star.to_dict() for star in self.galaxy_stars],
-        }
-
 class GalaxyStar:
-    catalog_type = "galaxy_stars"
     def __init__(self, name, x, y, color, radius, solar_system):
-        self.id = get_unique_id()
-        catalog.register(self)
-        
         self.name = name
         self.x = x
         self.y = y
@@ -242,27 +217,3 @@ class GalaxyStar:
     @property
     def owner(self):
         return self.solar_system.owner
-    
-    def setup_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "x": self.x,
-            "y": self.y,
-            "color": self.color,
-            "radius": self.radius,
-            "owner": self.owner.name if self.owner else None,
-            "owner_id": self.owner.id if self.owner else None,
-            "solar_system": self.solar_system.id,
-        }
-    
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "color": self.color,
-            "owner": self.solar_system.owner.id if self.solar_system.owner else None,
-            "owner_name": self.solar_system.owner.name if self.solar_system.owner else None,
-        }
-    
-        # later add other summary fields such as fleets, colonies, megastructures, etc.

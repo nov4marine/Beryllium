@@ -80,13 +80,6 @@ class Universe:
         solar_system.uid = uid
         self.solar_systems[uid] = solar_system
         return uid
-    
-    def register_star(self, star, solar_system_id):
-        uid = self.get_uid()
-        star.uid = uid
-        star.solar_system_id = solar_system_id
-        self.solar_systems[solar_system_id].stars.append(uid)
-        return uid
 
     # --- QUERY METHODS ---
     # These replace your nested for-loops.

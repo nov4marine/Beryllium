@@ -1,15 +1,17 @@
 from model.world.galaxy import Galaxy
 from model.politics.nation import Nation
 from model.world.calendar import Calendar
-from model.base import catalog
+
+from model.generators import *
+from model.universe import Universe
 
 
 class GameModel:
     """The core game model, containing all major game entities and managing the game state."""
     def __init__(self):
         # --- Core Game Attributes ---
+        self.universe = Universe()
         self.calendar = Calendar(self)
-        self.catalog = None  # Will be set to the global catalog instance
 
         # --- Major Game Entities ---
         self.galaxy = None
@@ -23,10 +25,14 @@ class GameModel:
         # --- Configuration/Rules? (can be loaded from data files) ---
         # self.game_rules = data.load_game_rules() # Example: difficulty, game length, resource types
 
+    def initialize_procedural_generation(self):
+        """Initializes the procedural generation of the galaxy and its entities."""
+        print("Initializing Procedural Generation...")
+        self.galaxy = Galaxy()
+
     def initialize_new_game(self):
         """Transition from a blank model to a new game state. Begin simulation."""
         print("Initializing Simulation...")
-        self.catalog = catalog  # Use the global catalog instance
 
         self.galaxy = Galaxy()
         # Add the galaxy to receive calendar updates both daily and monthly

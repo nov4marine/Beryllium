@@ -1,14 +1,9 @@
 import random
 import math
-from model.base import get_unique_id, catalog
 
 class SolarSystem:
     """Container for all celestial bodies in a system (star, planets, moons, asteroids, etc.)"""
-    catalog_type = "solar_systems"
     def __init__(self, name, owner=None):
-        self.id = get_unique_id()
-        catalog.register(self)
-
         self.name = name
         self.owner = owner
         self.solar_system_size = 0  # Can be set later based on bodies
@@ -214,27 +209,11 @@ class SolarSystem:
         planet.color = (0, 255, 255)  # Optional: visually mark as habitable
 
         return planet, system.name
-    
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "owner": self.owner.name if self.owner else None,
-            "owner_id": self.owner.id if self.owner else None,
-            "solar_system_size": self.solar_system_size,
-            "bodies": [body.to_dict() for body in self.bodies],
-        }
-
-
 
 # --- Celestial Body Classes ---
 
 class CelestialBody:
-    catalog_type = "celestial_bodies"
     def __init__(self, name, body_type, radius, size, color, angle, speed, parent=None, **kwargs):
-        self.id = get_unique_id()
-        catalog.register(self)
-        
         self.name = name
         self.body_type = body_type # "star", "planet", "moon", "asteroid"
         self.radius = radius  # Distance from parent (or system center for stars). Orbital radius.
@@ -260,35 +239,6 @@ class CelestialBody:
         y = parent_y + math.sin(self.angle) * self.radius
         return (x, y)
     
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "body_type": self.body_type,
-            "radius": self.radius,
-            "size": self.size,
-            "color": self.color,
-            "angle": self.angle,
-            "speed": self.speed,
-            "parent": self.parent.name if self.parent else None,
-            "parent_id": self.parent.id if self.parent else None,
-            "colony": self.colony.name if hasattr(self, 'colony') and self.colony else None,
-            "colony_id": self.colony.id if hasattr(self, 'colony') and self.colony else None,
-        }
-    
-    def summary_dict(self):
-        return {
-            "name": self.name,
-            "body_type": self.body_type,
-            "radius": self.radius,
-            "size": self.size,
-            "color": self.color,
-            "angle": self.angle,
-            "speed": self.speed,
-            "parent": self.parent.name if self.parent else None,
-        }
-
-
 
 class Star(CelestialBody):
     STAR_COLORS = {
@@ -309,12 +259,6 @@ class Star(CelestialBody):
     def get_position(self):
         return (0, 0)  # Always at system center
 
-    def to_dict(self):
-        data = super().to_dict()
-        data.update({
-            "star_type": self.star_type,
-        })
-        return data
 
 class Planet(CelestialBody):
     def __init__(self, name, radius, size, color, angle, speed, parent, resources=None, planet_type="rocky", habitable=False,
@@ -327,17 +271,6 @@ class Planet(CelestialBody):
         self.colony = colony
         self.resources = resources
         # Probably a dictionary of resources and their amounts. will create a function for procedural generation of resources later
-
-    def to_dict(self):
-        data = super().to_dict()
-        data.update({
-            "planet_type": self.planet_type,
-            "habitable": self.habitable,
-            "climate": self.climate,
-            "colony": self.colony.to_dict() if self.colony else None,
-            "resources": self.resources,
-        })
-        return data
 
 
 class Moon(Planet):

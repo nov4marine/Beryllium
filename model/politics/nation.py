@@ -1,11 +1,9 @@
 import arcade.color
 from model.economy.colony import Colony
 from model.economy.market import Market
-from model.base import get_unique_id
 
 class Nation:
     def __init__(self, name):
-        self.id = get_unique_id()
         self.name = name
         self.color = arcade.color.BLUE
         self.population = 1200000 # 1.2 million initial population, buildings each 10k, for 120 buildings
@@ -87,25 +85,3 @@ class Nation:
     def on_daily_update(self):
         """The daily update loop for the nation."""
         pass
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "color": self.color,
-            "population": self.population,
-            "gdp": self.gdp,
-            "gdp_per_capita": self.gdp_per_capita,
-            "standard_of_living": self.standard_of_living,
-            "radicals": self.radicals,
-            "loyalists": self.loyalists,
-            "num_planets": len(self.planets),
-            "num_colonies": len(self.colonies),
-            "num_solar_systems": len(self.solar_systems),
-            "capital": self.capital.name if self.capital else None,
-            "capital_id": self.capital.id if self.capital else None,
-            "bureaucracy": self.bureaucracy,
-            "authority": self.authority,
-            "treasury": self.treasury,
-            # add more fields as needed
-        }
