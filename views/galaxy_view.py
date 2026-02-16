@@ -1,7 +1,7 @@
 import arcade
 import arcade.gui
 from views.solar_system_view import SolarSystemView
-from views.ui_stuff import GalaxyStarLabel, CelestialBodyLabel
+from views.persistent_ui import GalaxyStarLabel, CelestialBodyLabel
 
 from pyglet.graphics import Batch
 

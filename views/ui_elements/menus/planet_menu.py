@@ -1,73 +1,6 @@
 import arcade
 import arcade.gui
-
-
-class GenericMenu:
-    """
-    A generic menu window with a title bar and close button. Content area to be filled by subclasses.
-    To use, subclass and override setup_content() to populate the content_frame.
-    Ensure to call open_window() to show the menu and enable the manager. Then call draw() in your view's draw() method,
-    and update() in your view's on_update() method (or once monthly/daily if preferred).
-    """
-
-    # This should always exist in the view or persistent UI, and is activated when needed, which opens the window
-    # with the relevant object updating the content.
-    def __init__(self, asset_manager=None):
-        self.manager = arcade.gui.UIManager()
-        self.asset_manager = asset_manager
-
-        self.root = arcade.gui.UIAnchorLayout()
-        self.manager.add(self.root)
-        self.window = arcade.gui.UIAnchorLayout(size_hint=(0.7, 0.7))
-        self.window.with_background(color=arcade.color.DARK_SLATE_GRAY)  # Can probably delete this
-        self.root.add(self.window)
-
-        self.top_bar = arcade.gui.UIAnchorLayout(size_hint=(1, 0.08))
-        self.top_bar.with_background(color=arcade.color.DARK_BLUE_GRAY)
-        self.title_label = arcade.gui.UILabel(text="Menu Title", font_size=18)
-        self.close_button = arcade.gui.UIFlatButton(text="X", size_hint=(0.08, 0.8))
-        self.close_button.on_click = self.close_window
-
-        self.top_bar.add(self.title_label, anchor_x="center")
-        self.top_bar.add(self.close_button, anchor_x="right")
-        self.window.add(self.top_bar, anchor_y="top")
-
-        self.content_frame = arcade.gui.UIAnchorLayout(size_hint=(1, 0.92))
-        self.content_frame.with_background(color=arcade.color.LIGHT_GRAY)
-        self.window.add(self.content_frame, anchor_y="bottom")
-
-        # List of content widgets that need daily updates
-        self.short_term_updatable_content = []  # List of content widgets that are specific to current tab and must be cleared on tab switch
-        self.long_term_updatable_content = []  # List of content widgets that persist across tabs, and should never be cleared
-
-        #self.setup_content() # Populate content_frame
-        # I'm realizing the above line may be better called when opening the window with specific data, allowing the menu to be created before data exists.
-
-    def setup_content(self):
-        """
-        To be overridden by subclasses to populate content_frame. Does nothing on its own.
-        Add widgets/layouts to self.content_frame here, which is an anchor layout filling most of the window.
-        """
-        pass
-
-    def draw(self):
-        if self.manager._enabled:
-            self.manager.draw()
-
-    def on_daily_update(self):
-        if self.manager._enabled: # This doesn't necessarily need to be implemented unless there are performance issues. 
-            #updating every frame is probably fine for most cases.
-            pass  # To be overridden by subclasses
-
-    def open_window(self):
-        self.manager.enable()
-
-    def close_window(self, event=None):
-        # Hide or destroy the menu (implementation depends on your view system)
-        self.manager.disable()
-        # Optionally: remove from parent, or set a flag
-        # You can expand this as needed
-        pass
+from views.ui_elements.generic_menu import GenericMenu
 
 
 class PlanetMenu(GenericMenu):
@@ -78,16 +11,11 @@ class PlanetMenu(GenericMenu):
     All content must be added to the content_frame defined in GenericMenu. (and probably cleared first)
     """
 
-    def __init__(self, persistent_ui, asset_manager):
-        super().__init__(asset_manager)
-        self.planet = None  # Will be set to a Colony
-        self.nation = None  # Does nothing for now, but could be useful
-
-        self.persistent_ui = persistent_ui
-        self.asset_manager = asset_manager
-
+    def __init__(self, asset_manager):
+        super().__init__()
+        self.planet = None  # This will hold the current colony/planet object whose info we want to display
+        self.colony = self.planet.colony if self.planet and self.planet.colony else None
         self.current_tab = None
-
         # Utilities 
         # RGBA: (R, G, B, A), where A is 0 (fully transparent) to 255 (fully opaque)
         self.semi_transparent_bg = (30, 30, 30, 180)  # Dark gray, mostly opaque
@@ -115,8 +43,7 @@ class PlanetMenu(GenericMenu):
         # --- Box 1 --- Primary planet art and info with governor portrait and name
         box1 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Primary planet art and info
         #climate = self.planet.planet.climate if self.planet and self.planet.planet else "not_implemented"
-        climate = self.planet.planet.climate if self.planet else "continental"
-        print(f"Planet climate for menu: {climate}")
+        climate = self.planet.climate if self.planet else "continental"
         climate_background = self.asset_manager.ui_art.get(climate, self.asset_manager.ui_art["default"])
         box1.with_background(texture=climate_background)
         box1.with_border()
@@ -124,13 +51,13 @@ class PlanetMenu(GenericMenu):
         stats_box = arcade.gui.UIBoxLayout(vertical=False, size_hint=(1, 0.1), space_between=50)  # Key stats
         stats_box.with_padding(all=10)
         stats_box.with_background(color=self.semi_transparent_bg)
-        self.gdp_label = arcade.gui.UILabel(text=f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}")
+        self.gdp_label = arcade.gui.UILabel(text=f"GDP: {self.colony.local_bls.statistics.get('gdp', 'N/A')}")
         self.population_label = arcade.gui.UILabel(
-            text=f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}")
+            text=f"Population: {self.colony.local_bls.statistics.get('population', 'N/A')}")
         self.stability_label = arcade.gui.UILabel(
-            text=f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}")
+            text=f"Stability: {self.colony.local_bls.statistics.get('stability', 'N/A')}")
         self.unemployment_label = arcade.gui.UILabel(
-            text=f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%")
+            text=f"Unemployment: {self.colony.local_bls.statistics.get('unemployment_rate', 'N/A')}%")
 
         stats_box.add(self.gdp_label)
         stats_box.add(self.population_label)
@@ -141,19 +68,19 @@ class PlanetMenu(GenericMenu):
 
 
     def open_window(self, colony):
-        self.planet = colony
-        self.title_label.text = getattr(colony, 'name', 'Planet')
+        self.colony = colony
+        #self.refresh(colony)
+        self.title_label.text = getattr(colony, 'name', f"{self.planet.name}")
         self.show_summary_tab()
-        self.manager.enable()
+        self.visible = True
 
     def show_summary_tab(self):
         self.grid.clear()  # Clear previous content
         self.current_tab = "Summary"
-        self.short_term_updatable_content.clear()
 
         # --- Box 1 --- Primary planet art and info with governor portrait and name
         self.box1()
-        climate = self.planet.planet.climate if self.planet else "continental"
+        climate = self.planet.climate if self.planet else "continental"
 
         # --- Box 2 --- Buildings overview
         box2 = arcade.gui.UIAnchorLayout(size_hint=(1, 1))  # Buildings overview
@@ -167,9 +94,9 @@ class PlanetMenu(GenericMenu):
         urban_buildings.with_padding(all=100)
         # --- Urban buildings grid ---
         urban_building_list = []
-        if self.planet and self.planet.buildings:
+        if self.colony and self.colony.buildings:
             # only do the first 6 urban buildings for now 
-            for building in self.planet.buildings:
+            for building in self.colony.buildings:
                 if building.geography == "Urban":
                     urban_building_list.append(building)
             for building in urban_building_list[:7]:
@@ -187,8 +114,8 @@ class PlanetMenu(GenericMenu):
         rural_buildings.with_padding(all=100)
         # --- Rural buildings grid ---
         rural_buildings_list = []
-        if self.planet and self.planet.buildings:
-            for building in self.planet.buildings:
+        if self.colony and self.colony.buildings:
+            for building in self.colony.buildings:
                 if building.geography == "Rural":
                     rural_buildings_list.append(building)
             for building in rural_buildings_list[:7]:
@@ -241,7 +168,7 @@ class PlanetMenu(GenericMenu):
         box4a.with_border(color=arcade.color.STEEL_BLUE)
         expensive_market_label = arcade.gui.UILabel(text="Expensive Goods")
         box4a.add(expensive_market_label)
-        for good in self.planet.local_market.get_expensive_goods(number=5):
+        for good in self.colony.local_market.get_expensive_goods(number=5):
             #good_label = arcade.gui.UILabel(text=f"{good.name}: ${good.current_price}")
             #box4a.add(good_label)
             expensive_good_widget = MarketGoodWidget(good, self.asset_manager)
@@ -253,7 +180,7 @@ class PlanetMenu(GenericMenu):
         box4b.with_border(color=arcade.color.STEEL_BLUE)
         cheap_market_label = arcade.gui.UILabel(text="Cheap Goods")
         box4b.add(cheap_market_label)
-        for good in self.planet.local_market.get_cheap_goods(number=5):
+        for good in self.colony.local_market.get_cheap_goods(number=5):
             #good_label = arcade.gui.UILabel(text=f"{good.name}: ${good.current_price}")
             #box4b.add(good_label)
             cheap_good_widget = MarketGoodWidget(good, self.asset_manager)
@@ -324,20 +251,23 @@ class PlanetMenu(GenericMenu):
         # add completed grid to content frame for display
         self.content_frame.add(self.grid)
 
-    def on_daily_update(self):
-        if self.manager._enabled: # This doesn't necessarily need to be implemented unless there are performance issues. 
-            for content in self.short_term_updatable_content:
-                content.on_daily_update()
-            for content in self.long_term_updatable_content:
-                content.on_daily_update()
-
         if self.current_tab == "Summary":
-            self.gdp_label.text = f"GDP: {self.planet.local_bls.statistics.get('gdp', 'N/A')}"
-            self.population_label.text = f"Population: {self.planet.local_bls.statistics.get('population', 'N/A')}"
-            self.stability_label.text = f"Stability: {self.planet.local_bls.statistics.get('stability', 'N/A')}"
-            self.unemployment_label.text = f"Unemployment: {self.planet.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
+            self.gdp_label.text = f"GDP: {self.colony.local_bls.statistics.get('gdp', 'N/A')}"
+            self.population_label.text = f"Population: {self.colony.local_bls.statistics.get('population', 'N/A')}"
+            self.stability_label.text = f"Stability: {self.colony.local_bls.statistics.get('stability', 'N/A')}"
+            self.unemployment_label.text = f"Unemployment: {self.colony.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
 
-            
+    def refresh(self, colony):
+        self.colony = colony
+        if self.current_tab == "Summary":
+            self.gdp_label.text = f"GDP: {self.colony.local_bls.statistics.get('gdp', 'N/A')}"
+            self.population_label.text = f"Population: {self.colony.local_bls.statistics.get('population', 'N/A')}"
+            self.stability_label.text = f"Stability: {self.colony.local_bls.statistics.get('stability', 'N/A')}"
+            self.unemployment_label.text = f"Unemployment: {self.colony.local_bls.statistics.get('unemployment_rate', 'N/A')}%"
+        elif self.current_tab == "Economy":
+            # Update economy tab content if needed
+            pass
+
 
 class BuildingWidget(arcade.gui.UITextureButton):
     def __init__(self, planet_menu, building, asset_manager, size=80):
@@ -345,7 +275,7 @@ class BuildingWidget(arcade.gui.UITextureButton):
         texture = asset_manager.building_icons.get(building.name, asset_manager.building_icons["default"])
         super().__init__(texture=texture, width=size, height=size)
         self.planet_menu = planet_menu
-        self.persistent_ui = planet_menu.persistent_ui
+        #self.persistent_ui = planet_menu.persistent_ui
         self.building = building
         self.asset_manager = asset_manager
 
@@ -368,10 +298,10 @@ class BuildingWidget(arcade.gui.UITextureButton):
         self.add(self.productivity_label, anchor_x="right", anchor_y="top", align_x=-2, align_y=-2)
         self.add(self.profit_label, anchor_x="center", anchor_y="bottom", align_y=2)
 
-        @self.event("on_click")
-        def on_click_building(event, persistent_ui=self.persistent_ui, building=building):
-            persistent_ui.show_building_gui(building)
-            print(f"Clicked on {building.geography} building: {building.name}")
+        #@self.event("on_click")
+        #def on_click_building(event, persistent_ui=self.persistent_ui, building=building):
+            #persistent_ui.show_building_gui(building)
+            #print(f"Clicked on {building.geography} building: {building.name}")
 
 
     def on_update(self, dt):
@@ -718,11 +648,10 @@ class BuildingGUI(GenericMenu):
     For the first draft, this will simply imitate Victora 3's building UI.
     """
 
-    def __init__(self, persistent_ui, asset_manager, *args, **kwargs):
+    def __init__(self, asset_manager, *args, **kwargs):
         super().__init__(asset_manager, *args, **kwargs)
         print("BuildingGUI initialized")
         self.building = None
-        self.persistent_ui = persistent_ui
         self.asset_manager = asset_manager
         self.content_frame.with_background(color=arcade.color.DARK_SLATE_GRAY)
         self.window.size_hint = (0.3, 0.6)

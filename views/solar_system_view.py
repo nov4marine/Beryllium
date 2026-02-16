@@ -1,6 +1,6 @@
 import arcade
 import arcade.gui
-from views.ui_stuff import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite, draw_dashed_circle_outline
+from views.persistent_ui import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite, draw_dashed_circle_outline
 
 
 
