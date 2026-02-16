@@ -46,7 +46,7 @@ class Calendar:
         self.current_date = self.__str__()
         print(f"{self.current_date} ⚙️ Day Advanced.")
 
-    def update(self):
+    def update(self, delta_time):
         """Process the real time for the calendar"""
         for observer in self.regular_observers:
             observer.on_update(delta_time)
