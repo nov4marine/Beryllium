@@ -139,27 +139,6 @@ class SolarSystem:
         nation.capital = planet
         nation.initialize_nation()
 
-    def determine_planet_type(self, distance_ratio):
-        x = distance_ratio
-        weights = [
-            max(0, 1.0 - x * 2),  # Rocky more likely closer in
-            max(0, 2 ** (-((x-0.6) ** 2) / 0.03)),  # Gas more likely farther out
-            max(0, x - 0.5)  # Icy dominant in outer regions
-        ]
-        return random.choices(["rocky", "gas", "icy"], weights=weights, k=1)[0]
-    
-    def determine_planet_size(self, planet_type):
-        if planet_type == "rocky":
-            return random.randint(24, 36)
-        elif planet_type == "gas":
-            return random.randint(40, 60)
-        elif planet_type == "icy":
-            return random.randint(18, 28)
-        elif planet_type == "moon":
-            return random.randint(12, 20)
-        else:
-            return 20  # Default size
-
     def on_update(self, time_delta):
         for body in self.bodies:
             body.update_orbit(time_delta)

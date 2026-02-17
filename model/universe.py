@@ -14,7 +14,7 @@ class Universe:
         # We use dictionaries {id: object} for O(1) lookup speed
         self.nations = {}
         self.solar_systems = {}
-        self.planets = {}
+        self.planets = {} # Includes all types of celestial bodies, not just planets.
         self.colonies = {}
         self.buildings = {}
         self.jobs = {}
@@ -80,6 +80,14 @@ class Universe:
         solar_system.uid = uid
         self.solar_systems[uid] = solar_system
         return uid
+    
+    def register_celestial_body(self, body, solar_system_id, parent_id):
+        uid = self.get_uid()
+        body.uid = uid
+        body.solar_system_id = solar_system_id
+        body.parent_id = parent_id
+        self.planets[uid] = body
+        return uid
 
     # --- QUERY METHODS ---
     # These replace your nested for-loops.
@@ -97,3 +105,5 @@ class Universe:
         relevant_colonies = [c.uid for c in self.colonies.values() if c.owner_id == nation_id]
         # You can now sum up production from buildings linked to these colony IDs
         pass
+
+universe = Universe()

@@ -3,14 +3,13 @@ from model.politics.nation import Nation
 from model.world.calendar import Calendar
 
 from model.generators import *
-from model.universe import Universe
+from model.universe import universe
 
 
 class GameModel:
     """The core game model, containing all major game entities and managing the game state."""
     def __init__(self):
         # --- Core Game Attributes ---
-        self.universe = Universe()
         self.calendar = Calendar(self)
 
         # --- Major Game Entities ---

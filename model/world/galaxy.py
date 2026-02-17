@@ -3,8 +3,6 @@ import networkx as nx
 import random
 import math
 import os
-from model.world.solar_system import SolarSystem
-
 
 
 class Galaxy:
@@ -15,67 +13,8 @@ class Galaxy:
 
         # Step 1: Generate stars, and their respective solar systems
         self.galaxy_stars = self._generate_galaxy_stars(num_stars, galaxy_size)
-        self.solar_systems = [s.solar_system for s in self.galaxy_stars]
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
-
-    def _generate_galaxy_stars(self, num_stars, galaxy_size):
-        star_colors = [
-            (255, 255, 0), (255, 0, 0), (0, 255, 0),
-            (0, 0, 255), (255, 255, 255)
-        ]
-        stars = []
-
-        num_arms = 4
-        arm_tightness = 3  # Lower = looser, higher = tighter spiral
-        arm_spread = 0.25  # Lower = thinner arms, higher = fuzzier arms
-        center_radius = galaxy_size * 0.15
-        overall_rotation = math.pi / 4
-        min_distance = 200
-
-        for i in range(num_stars):
-            while True:
-                # Radial distance (ensuring it's outside the empty center)
-                r = random.uniform(center_radius, galaxy_size)
-
-                # Angle for the spiral arms
-                arm_index = i % num_arms
-                arm_angle = arm_index * (2 * math.pi / num_arms)
-                # Add a small random offset to theta for spread
-                theta_offset = random.gauss(0, arm_spread)
-                theta = overall_rotation + arm_angle + arm_tightness * math.log(r + 1) + theta_offset
-
-                # Convert polar to Cartesian
-                x = r * math.cos(theta)
-                y = r * math.sin(theta)
-
-                # Check minimum distance to other stars
-                too_close = False
-                for star in stars:
-                    distance = math.sqrt((x - star.x) ** 2 + (y - star.y) ** 2)
-                    if distance < min_distance:
-                        too_close = True
-                        break
-
-                # Add the star only if it's far enough from others
-                if not too_close:
-                    break
-
-            # Assign random attributes to the star
-            radius = random.randint(20, 30)
-            color = random.choice(star_colors)
-            name = f"star {i + 1}"
-
-            star = GalaxyStar(
-                name=name,
-                x=x,
-                y=y,
-                color=color,
-                radius=radius,
-                solar_system=SolarSystem(name=name),
-            )
-            stars.append(star)
-        return stars
 
     def generate_delaunay_hyperlanes(self, max_connections=3):
         points = [(star.x, star.y) for star in self.galaxy_stars]
