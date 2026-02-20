@@ -30,11 +30,14 @@ import random
 import math
 import os
 from model.world.solar_system import SolarSystem, Star, Planet, Moon
+from model.economy.colony import Colony
+from model.politics.nation import Nation
 
 def generate_lifeless_galaxy(universe):
     #TODO: This will later be refactored into a more flexible system for custom galaxy generation.
     num_stars = 1000
     galaxy_size = 6000  # Max radius from center
+    star_uids = []
     star_colors = [
         (255, 255, 0), (255, 0, 0), (0, 255, 0),
         (0, 0, 255), (255, 255, 255)
@@ -93,10 +96,13 @@ def generate_lifeless_galaxy(universe):
 
         stars.append(star)
         sys_id = universe.register_solar_system(star)
+        star_uids.append(sys_id)
         fill_system_with_planets(universe, sys_id)
+        
+    return star_uids
 
 def fill_system_with_planets(universe, solar_system_id):
-    system = universe.solar_systems[solar_system_id]
+    system = universe.get_solar_system[solar_system_id]
 
     bodies = []
 
@@ -133,8 +139,8 @@ def fill_system_with_planets(universe, solar_system_id):
     for i in range(num_planets):
         orbital_radius = 600 * ((i + 1) ** 1.8) + star.size * 4 # Exponential spacing. Orbital radius is distance from star. v1 is 600 * (1.5 ** i)
         distance_ratio = orbital_radius / solar_system_size
-        planet_type = determine_planet_type(distance_ratio) # "rocky", "gas", or "icy"
-        size = determine_planet_size(planet_type)
+        planet_type = _determine_planet_type(distance_ratio) # "rocky", "gas", or "icy"
+        size = _determine_planet_size(planet_type)
         color = None  # Let Planet class pick based on type, or randomize here
         speed = 2 / orbital_radius * 0.5
         angle = random.uniform(0, 2 * math.pi)
@@ -166,7 +172,7 @@ def fill_system_with_planets(universe, solar_system_id):
                 moon = Moon(
                     name=f"{planet.name} Moon {m + 1}",
                     radius=moon_radius,
-                    size=determine_planet_size("moon"),
+                    size=_determine_planet_size("moon"),
                     color=(180, 180, 180),
                     angle=moon_angle,
                     speed=random.uniform(0.001, 0.003),
@@ -184,7 +190,7 @@ def fill_system_with_planets(universe, solar_system_id):
                 moon = Moon(
                     name=f"{planet.name} Moon {m + 1}",
                     radius=moon_radius,
-                    size=determine_planet_size("moon"),
+                    size=_determine_planet_size("moon"),
                     color=(180, 180, 180),
                     angle=moon_angle,
                     speed=random.uniform(0.001, 0.003),
@@ -193,7 +199,49 @@ def fill_system_with_planets(universe, solar_system_id):
                 bodies.append(moon)
                 moon_id = universe.register_celestial_body(moon, solar_system_id=solar_system_id, parent_id=planet_id)
 
-def determine_planet_type(distance_ratio):
+# Dynamic Entity Creation and Registration
+# Which means living things like nations, colonies, buildings, jobs, and pops.
+def spawn_homeworld_colony(universe, nation_id, planet_id):
+    # 1. Create the colony
+    new_colony = Colony(name="New Terra")
+    new_colony.owner_id = nation_id  # The 'Fingerprint'
+    
+    # Register it in the warehouse
+    col_id = universe.register_colony(new_colony, planet_id)
+    
+    # We DON'T do: nation.colony_ids.append(col_id)
+    # The Nation will find this colony automatically via its property!
+
+def create_nation(universe, name):
+    new_nation = Nation(name)
+    nation_id = universe.register_nation(new_nation)
+    return nation_id
+
+def create_colony(universe, nation_id, planet_id):
+    new_colony = Colony(name="New Terra")
+    new_colony.owner_id = nation_id  # The 'Fingerprint'
+    
+    # Register it in the warehouse
+    col_id = universe.register_colony(new_colony, planet_id)
+    
+    # We DON'T do: nation.colony_ids.append(col_id)
+    # The Nation will find this colony automatically via its property!
+
+# TODO: get the template below working. 
+def spawn_colony_with_pops(universe, planet_id):
+    pass
+    # 1. Create the colony
+    new_colony = None#Colony(name="New Hope")
+    colony_id = universe.register_colony(new_colony, planet_id)
+
+    # 2. Create the pops and 'inject' the universe
+    for _ in range(3):
+        # We hand the pop the universe it belongs to
+        new_pop = None#Pop(universe_reference=universe)
+        universe.register_pop(new_pop, colony_id=colony_id)
+
+# Helper functions for planet generation
+def _determine_planet_type(distance_ratio):
     x = distance_ratio
     weights = [
         max(0, 1.0 - x * 2),  # Rocky more likely closer in
@@ -202,7 +250,7 @@ def determine_planet_type(distance_ratio):
     ]
     return random.choices(["rocky", "gas", "icy"], weights=weights, k=1)[0]
 
-def determine_planet_size(planet_type):
+def _determine_planet_size(planet_type):
     if planet_type == "rocky":
         return random.randint(24, 36)
     elif planet_type == "gas":

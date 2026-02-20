@@ -6,18 +6,27 @@ import os
 
 
 class Galaxy:
-    def __init__(self, galaxy_size=6000, num_stars=1000):
-        """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
+    def __init__(self, galaxy_size=6000, num_stars=1000, solar_system_uids=None, universe=None):
+        """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL
+        The Galaxy class now stores only UIDs for solar systems.
+        To access the actual SolarSystem objects, use the solar_systems property,
+        which looks them up in the Universe table.
+        """
+
         self.galaxy_size = galaxy_size # Maximum radius from center
         self.num_stars = num_stars
+        self.solar_system_uids = solar_system_uids if solar_system_uids is not None else []
+        self.universe = universe
 
-        # Step 1: Generate stars, and their respective solar systems
-        self.galaxy_stars = self._generate_galaxy_stars(num_stars, galaxy_size)
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
 
+    @property
+    def solar_systems(self):
+        return [self.universe.get_solar_system(uid) for uid in self.solar_system_uids]
+
     def generate_delaunay_hyperlanes(self, max_connections=3):
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.galaxy_x, star.galaxy_y) for star in self.solar_systems]
         tri = scipy.spatial.Delaunay(points)
         G = nx.Graph()
         star_connections = {point: [] for point in points}
@@ -43,7 +52,7 @@ class Galaxy:
                     star_connections[end].append(start)
 
         # Convert to GalaxyStar objects
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.galaxy_x, star.galaxy_y): star for star in self.solar_systems}
         hyperlanes = []
         for start in star_connections:
             for end in star_connections[start]:
@@ -51,7 +60,7 @@ class Galaxy:
         return hyperlanes
 
     def generate_prim_hyperlanes(self):
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.galaxy_x, star.galaxy_y) for star in self.solar_systems]
         G = nx.Graph()
         for i, start in enumerate(points):
             for j, end in enumerate(points):
@@ -60,7 +69,7 @@ class Galaxy:
                 distance = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
                 G.add_edge(start, end, weight=distance)
         mst = nx.minimum_spanning_tree(G, algorithm="prim", weight="weight")
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.galaxy_x, star.galaxy_y): star for star in self.solar_systems}
         hyperlanes = []
         for start, end in mst.edges:
             hyperlanes.append((pos_to_star[start], pos_to_star[end]))
@@ -68,13 +77,13 @@ class Galaxy:
 
     def draw_sovereignty_voronoi(self, screen, camera):
         """Draw semi-transparent sovereignty regions using Voronoi polygons."""
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.galaxy_x, star.galaxy_y) for star in self.solar_systems]
         if len(points) < 3:
             return  # Voronoi needs at least 3 points
 
         vor = scipy.spatial.Voronoi(points)
         # Map points to stars for color lookup
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.galaxy_x, star.galaxy_y): star for star in self.solar_systems}
 
         for point_idx, region_idx in enumerate(vor.point_region):
             region = vor.regions[region_idx]
@@ -82,7 +91,7 @@ class Galaxy:
                 continue  # Skip infinite regions
 
             polygon = [vor.vertices[i] for i in region]
-            star = self.galaxy_stars[point_idx]
+            star = self.solar_systems[point_idx]
             # Choose color: use star.owner.color if available, else default
             if hasattr(star, "owner") and star.owner is not None:
                 color = star.owner.color
@@ -105,26 +114,22 @@ class Galaxy:
             if surf_w < 1 or surf_h < 1:
                 continue
 
-    def deploy_nations(self, nations):
+    def get_starting_systems(self, number_of_nations):
         # Select potential starting systems
         unowned_systems = [s for s in self.solar_systems if s.owner is None]
 
-        if len(unowned_systems) < len(nations):
+        if len(unowned_systems) < number_of_nations:
             print("Not enough unowned systems to place all empires.")
             return
 
         # Choose starting systems that are far apart
         # This is a simplified approach, a more complex version might use a
         # distance metric or a grid system.
-        starting_systems = random.sample(unowned_systems, len(nations))
+        starting_systems = random.sample(unowned_systems, number_of_nations)
 
-        for i, nation in enumerate(nations):
-            system = starting_systems[i]
-            system.owner = nation
-            nation.solar_systems.append(system)
-            print(f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
-            system.assign_capital(nation)
-
+        # return the actual SolarSystem objects for the chosen UIDs that are unowned
+        return starting_systems
+    
     def on_update(self, time_delta):
         for system in self.solar_systems:
             system.on_update(time_delta)  

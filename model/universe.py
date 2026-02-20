@@ -106,4 +106,22 @@ class Universe:
         # You can now sum up production from buildings linked to these colony IDs
         pass
 
+    # --- Specific Queries for World Entities ---
+
+    def get_planet(self, planet_id):
+        """Returns the Planet object for a given planet_id."""
+        return self.planets.get(planet_id)
+    
+    def get_solar_system(self, solar_system_id):
+        """Returns the SolarSystem object for a given solar_system_id."""
+        return self.solar_systems.get(solar_system_id)
+    
+    def get_colony(self, colony_id):
+        """Returns the Colony object for a given colony_id."""
+        return self.colonies.get(colony_id)
+    
+    def get_nation(self, nation_id):
+        """Returns the Nation object for a given nation_id."""
+        return self.nations.get(nation_id)
+
 universe = Universe()

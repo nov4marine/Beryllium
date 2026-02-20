@@ -85,3 +85,17 @@ class Nation:
     def on_daily_update(self):
         """The daily update loop for the nation."""
         pass
+
+class NationStub:
+    def __init__(self, name, homeworld):
+        self.name = name
+        self.color = arcade.color.BLUE
+        self.population = 1200000 # 1.2 million initial population, buildings each
+        self.solar_systems = []  # List of all owned solar systems
+
+    @property
+    def owned_systems(self, universe):
+        # Perform a 'Census': Find every system in the warehouse
+        # where the 'owner_id' matches my ID.
+        return [sys for sys in universe.solar_systems.values() 
+                if sys.owner_id == self.uid]

@@ -3,124 +3,27 @@ import math
 
 class SolarSystem:
     """Container for all celestial bodies in a system (star, planets, moons, asteroids, etc.)"""
-    def __init__(self, name, owner=None):
+    def __init__(self, name, galaxy_x, galaxy_y, owner_id=None, universe=None):
         self.name = name
-        self.owner = owner
+        self.galaxy_x = galaxy_x  # To be set when placed in galaxy
+        self.galaxy_y = galaxy_y
+        self.owner_id = owner_id  # Nation ID of the owner, if any. We can look up the actual Nation object in the Universe when needed.
+        self.universe = universe
         self.solar_system_size = 0  # Can be set later based on bodies
-        self.bodies = self._generate_bodies()
+        self.body_uids = []  # List of UIDs for all celestial bodies in this system, registered in the Universe
 
-    def change_owner(self, new_owner):
-        """Change the owner of the solar system."""
-        self.owner = new_owner
+    @property
+    def bodies(self):
+        """Returns a list of all celestial bodies in this solar system."""
+        return [self.universe.get_planet(uid) for uid in self.body_uids]
+    
+    @property
+    def owner(self):
+        return self.universe.get_nation(self.owner_id) if self.owner_id is not None else None
 
-    def _generate_bodies(self):
-        bodies = []
-
-        # --- Generate the star ---
-        # Realistic star generation.
-        star_type = random.choice(["O", "B", "A", "F", "G", "K", "M"])
-        # Realistic star size range based on type
-        star_size_range = {
-            "O": (360, 480),
-            "B": (300, 360),
-            "A": (240, 300),
-            "F": (192, 240),
-            "G": (152, 192),
-            "K": (112, 152),
-            "M": (72, 112),
-        }
-        star = Star(
-            name=f"{self.name} Star",
-            star_type=star_type,
-            radius=0,  # At system center
-            size=random.randint(*star_size_range[star_type]),
-            color=None,  # Will be set by Star class based on type
-            angle=0,
-            speed=0,
-            parent=None
-        )
-        bodies.append(star)
-
-        # --- Generate planets ---
-        num_planets = random.randint(4, 10)  # Random number of planets
-        solar_system_size = (600 * ((num_planets + 1) ** 1.8)) + (star.size * 4)
-        self.solar_system_size = solar_system_size
-        for i in range(num_planets):
-            orbital_radius = 600 * ((i + 1) ** 1.8) + star.size * 4 # Exponential spacing. Orbital radius is distance from star. v1 is 600 * (1.5 ** i)
-            distance_ratio = orbital_radius / solar_system_size
-            planet_type = self.determine_planet_type(distance_ratio) # "rocky", "gas", or "icy"
-            size = self.determine_planet_size(planet_type)
-            color = None  # Let Planet class pick based on type, or randomize here
-            speed = 2 / orbital_radius * 0.5
-            angle = random.uniform(0, 2 * math.pi)
-            name = f"{self.name} Planet {i + 1}"
-            planet = Planet(
-                name=name,
-                radius=orbital_radius,
-                size=size,
-                color=color,
-                angle=angle,
-                speed=speed,
-                parent=star,
-                planet_type=planet_type
-            )
-            bodies.append(planet)
-
-            # --- Optionally make the planet habitable ---
-            if planet_type == "rocky" and random.random() < 0.1:
-                planet.habitable = True
-                planet.climate = random.choice(["continental", "ice", "desert", "ocean"])
-
-            # --- Optionally generate moons for some planets ---
-            if planet_type == "rocky" and random.random() < 0.4:
-                num_moons = random.randint(1, 2)
-                for m in range(num_moons):
-                    moon_radius = planet.size + 100 * (m + 1)
-                    moon_angle = random.uniform(0, 2 * math.pi)
-                    moon = Moon(
-                        name=f"{planet.name} Moon {m + 1}",
-                        radius=moon_radius,
-                        size=self.determine_planet_size("moon"),
-                        color=(180, 180, 180),
-                        angle=moon_angle,
-                        speed=random.uniform(0.001, 0.003),
-                        parent=planet
-                    )
-                    bodies.append(moon)
-
-            # --- Optionally generate moons for gas giants ---
-            if planet_type == "gas" and random.random() < 0.8:
-                num_moons = random.randint(1, 4)
-                for m in range(num_moons):
-                    moon_radius = 100 * (m + 1) + planet.size * 4
-                    moon_angle = random.uniform(0, 2 * math.pi)
-                    moon = Moon(
-                        name=f"{planet.name} Moon {m + 1}",
-                        radius=moon_radius,
-                        size=self.determine_planet_size("moon"),
-                        color=(180, 180, 180),
-                        angle=moon_angle,
-                        speed=random.uniform(0.001, 0.003),
-                        parent=planet
-                    )
-                    bodies.append(moon)
-
-        # --- Optionally generate asteroids ---
-        for _ in range(random.randint(10, 20)):
-            belt_radius = random.uniform(1500, 3000)
-            belt_angle = random.uniform(0, 2 * math.pi)
-            asteroid = Asteroid(
-                name=f"{self.name} Asteroid",
-                radius=belt_radius,
-                size=random.randint(4, 8),
-                color=(120, 120, 120),
-                angle=belt_angle,
-                speed=random.uniform(0.0005, 0.0015),
-                parent=star
-            )
-            # bodies.append(asteroid)
-
-        return bodies
+    def set_owner(self, new_owner_id):
+        """Simple property flip."""
+        self.owner_id = new_owner_id
 
     def assign_capital(self, nation):
         planets = [i for i in self.bodies if i.parent is not None]

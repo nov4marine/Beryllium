@@ -27,7 +27,30 @@ class GameModel:
     def initialize_procedural_generation(self):
         """Initializes the procedural generation of the galaxy and its entities."""
         print("Initializing Procedural Generation...")
-        self.galaxy = Galaxy()
+        stars = generate_lifeless_galaxy(universe)
+        self.galaxy = Galaxy(universe=universe, solar_system_uids=stars)
+
+        starting_systems = self.galaxy.get_starting_systems(number_of_nations=1)
+        self.player_nation = create_nation(name="player nation", homeworld=starting_systems[0]) 
+        #TODO: change to number of nations once we have AI empires
+
+        # Deploy nations to starting systems and set up capitals.
+        # The nation will be handed the starting planet, and will handle the colony setup and initial setup logic itself.
+        
+
+        for i, nation in enumerate(starting_systems):
+            system = starting_systems[i]
+            system.set_owner(nation)
+            nation.solar_systems.append(system)
+            print(f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
+            system.assign_capital(nation)
+
+
+        # No need to add to calendar.
+        #TODO: ensure galaxy can be created without nations, just to keep things modular and for observers.
+        # Nations will be deployed later after the galaxy is generated.
+        #self.player_nation = Nation(name="Player Nation")
+        #self.nations.append(self.player_nation)
 
     def initialize_new_game(self):
         """Transition from a blank model to a new game state. Begin simulation."""
