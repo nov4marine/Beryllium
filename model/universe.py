@@ -37,9 +37,24 @@ class Universe:
 
     # The arguments go: object itself, and IDs pointing to any relationships it has. 
 
+    def register_galaxy(self, galaxy):
+        uid = self.get_uid()
+        galaxy.uid = uid
+        galaxy.universe = self
+        self.galaxy = galaxy  # Assuming there's only one galaxy, we can store it directly.
+        return uid
+    
+    def register_nation(self, nation):
+        uid = self.get_uid()
+        nation.uid = uid
+        nation.universe = self
+        self.nations[uid] = nation
+        return uid
+
     def register_colony(self, colony, planet_id, owner_id):
         uid = self.get_uid()
         colony.uid = uid
+        colony.universe = self
         colony.planet_id = planet_id
         colony.owner_id = owner_id
         self.colonies[uid] = colony
@@ -48,6 +63,7 @@ class Universe:
     def register_building(self, building, colony_id):
         uid = self.get_uid()
         building.uid = uid
+        building.universe = self
         building.colony_id = colony_id
         self.buildings[uid] = building
         
@@ -60,6 +76,7 @@ class Universe:
     def register_job(self, job, building_id, colony_id):
         uid = self.get_uid()
         job.uid = uid
+        job.universe = self
         job.building_id = building_id
         job.colony_id = colony_id
         self.jobs[uid] = job
@@ -68,6 +85,7 @@ class Universe:
     def register_pop(self, pop, colony_id, job_id=None):
         uid = self.get_uid()
         pop.uid = uid
+        pop.universe = self
         pop.colony_id = colony_id
         pop.job_id = job_id
         self.pops[uid] = pop
@@ -78,12 +96,14 @@ class Universe:
     def register_solar_system(self, solar_system):
         uid = self.get_uid()
         solar_system.uid = uid
+        solar_system.universe = self
         self.solar_systems[uid] = solar_system
         return uid
     
     def register_star(self, star, solar_system_id):
         uid = self.get_uid()
         star.uid = uid
+        star.universe = self
         star.solar_system_id = solar_system_id
         self.solar_systems[solar_system_id].stars.append(uid)
         return uid
@@ -104,3 +124,17 @@ class Universe:
         relevant_colonies = [c.uid for c in self.colonies.values() if c.owner_id == nation_id]
         # You can now sum up production from buildings linked to these colony IDs
         pass
+
+universe = Universe()
+
+"""
+Tips and tricks of the universe pattern:
+- The Universe class is your 'Source of Truth' for all entities. It should be the only place where objects are created and stored.
+
+for storing relationships:
+for many to one or one to many relationships, source of truth is the child which holds the UID of its owner/parent.
+Said object's owner/parent then stores the relationship as a lookup property.
+For a many to many relationship, simply create a parent/owner that can track relationships as a sort of membership list.
+Think of the game itself that you're cloning for examples: Federations, Galactic Community, join Customs Union, etc.
+
+"""

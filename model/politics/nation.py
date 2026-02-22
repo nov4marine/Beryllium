@@ -1,6 +1,7 @@
 import arcade.color
 from model.economy.colony import Colony
 from model.economy.market import Market
+from model.universe import universe
 
 
 class Nation:
@@ -86,3 +87,32 @@ class Nation:
     def on_daily_update(self):
         """The daily update loop for the nation."""
         pass
+
+class Nation2:
+    "refactor in progress"
+    def __init__(self, name, color):
+        self.uid = None # Set by Universe.register
+        self.name = name
+        self.color = color
+        self.capital_id = None
+        self.treasury = 1000
+        
+        universe.register_nation(self)
+
+    # --- THE QUERIES ---
+    # These properties look like lists, but they are live 'Census' searches.
+    
+    @property
+    def systems(self, universe):
+        """Get every system I own."""
+        return [s for s in universe.solar_systems.values() if s.owner_id == self.uid]
+
+    @property
+    def colonies(self, universe):
+        """Get every colony I own."""
+        return [c for c in universe.colonies.values() if c.owner_id == self.uid]
+
+    @property
+    def total_population(self, universe):
+        """A social-science metric calculated on the fly."""
+        return sum(c.population(universe) for c in self.colonies(universe))

@@ -4,6 +4,7 @@ import random
 import math
 import os
 from model.world.solar_system import SolarSystem
+from model.universe import universe
 
 
 class Galaxy:
@@ -18,6 +19,8 @@ class Galaxy:
         self.solar_systems = [s.solar_system for s in self.galaxy_stars]
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
+        
+        universe.register_galaxy(self)
 
     def _generate_galaxy_stars(self, num_stars, galaxy_size):
         star_colors = [
