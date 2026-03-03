@@ -4,29 +4,19 @@ import random
 import math
 import os
 from model.world.solar_system import SolarSystem
-from model.universe import universe
 
 
 class Galaxy:
-    def __init__(self, galaxy_size=6000, num_stars=1000):
+    def __init__(self):
         """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
-        self.galaxy_size = galaxy_size # Maximum radius from center
-        self.num_stars = num_stars
-        self.galaxy_disk = None  # Placeholder for galactic disk image
-
         # Step 1: Generate stars, and their respective solar systems
-        self.galaxy_stars = self._generate_galaxy_stars(num_stars, galaxy_size)
-        self.solar_systems = [s.solar_system for s in self.galaxy_stars]
+        self.galaxy_stars = {}
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
         
-        universe.register_galaxy(self)
-
-    def _generate_galaxy_stars(self, num_stars, galaxy_size):
-        star_colors = [
-            (255, 255, 0), (255, 0, 0), (0, 255, 0),
-            (0, 0, 255), (255, 255, 255)
-        ]
+    def generate_galaxy_with_stars(self, num_stars=1000, galaxy_size=6000):
+        # number of stars to generate
+        # galaxy_size is the radius of the galaxy (farthest star generated, and used for rendering disk image)
         stars = []
 
         num_arms = 4
@@ -64,18 +54,12 @@ class Galaxy:
                 if not too_close:
                     break
 
-            # Assign random attributes to the star
-            radius = random.randint(20, 30)
-            color = random.choice(star_colors)
             name = f"star {i + 1}"
 
-            star = GalaxyStar(
+            star = SolarSystem(
                 name=name,
-                x=x,
-                y=y,
-                color=color,
-                radius=radius,
-                solar_system=SolarSystem(name=name),
+                galaxy_x=x,
+                galaxy_y=y,
             )
             stars.append(star)
         return stars

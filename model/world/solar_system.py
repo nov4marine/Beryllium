@@ -1,7 +1,5 @@
 import random
 import math
-from model.universe import universe
-
 
 class SolarSystem:
     """Container for all celestial bodies in a system (star, planets, moons, asteroids, etc.)"""
@@ -11,8 +9,6 @@ class SolarSystem:
         self.owner = owner
         self.solar_system_size = 0  # Can be set later based on bodies
         self.bodies = self._generate_bodies()
-
-        universe.register_solar_system(self)
 
     def change_owner(self, new_owner):
         """Change the owner of the solar system."""
@@ -229,7 +225,6 @@ class CelestialBody:
         self.speed = speed # Orbital speed (normal speed, not radians per time unit)
         self.parent = parent  # Another CelestialBody or None which this body orbits around
         self.rect = None  # For mouse collision/highlight
-        universe.register_celestial_body(self)
         for k, v in kwargs.items():
             setattr(self, k, v)
 

@@ -1,5 +1,25 @@
 import itertools
 
+class Registry:
+    """
+    A simple helper class to manage unique ID generation and object storage.
+    This is the backbone of the Universe pattern, ensuring every entity has a unique identifier and can be easily retrieved.
+    """
+    def __init__(self):
+        self._id_gen = itertools.count(start=1000)  # Start IDs at 1000 for readability
+        self.objects = {}  # {id: object}
+
+    def get_uid(self):
+        """Generates a new, unique integer ID."""
+        return next(self._id_gen)
+
+    def register(self, obj):
+        """Registers an object and assigns it a unique ID."""
+        uid = self.get_uid()
+        obj.uid = uid
+        self.objects[uid] = obj
+        return uid
+
 class Universe:
     """
     The central registry for all entities in the galaxy.
@@ -100,12 +120,12 @@ class Universe:
         self.solar_systems[uid] = solar_system
         return uid
     
-    def register_star(self, star, solar_system_id):
+    def register_celestial_body(self, celestial_body, solar_system_id):
         uid = self.get_uid()
-        star.uid = uid
-        star.universe = self
-        star.solar_system_id = solar_system_id
-        self.solar_systems[solar_system_id].stars.append(uid)
+        celestial_body.uid = uid
+        celestial_body.universe = self
+        celestial_body.solar_system_id = solar_system_id
+        self.planets[uid] = celestial_body  # Assuming all celestial bodies are planets for simplicity
         return uid
 
     # --- QUERY METHODS ---
