@@ -1,8 +1,6 @@
 import arcade.color
 from model.economy.colony import Colony
 from model.economy.market import Market
-from model.universe import universe
-
 
 class Nation:
     def __init__(self, name):
@@ -88,16 +86,15 @@ class Nation:
         """The daily update loop for the nation."""
         pass
 
-class Nation2:
+class NationStub:
     "refactor in progress"
-    def __init__(self, name, color):
+    def __init__(self, name, color="red"):
         self.uid = None # Set by Universe.register
         self.name = name
         self.color = color
         self.capital_id = None
         self.treasury = 1000
         
-        universe.register_nation(self)
 
     # --- THE QUERIES ---
     # These properties look like lists, but they are live 'Census' searches.

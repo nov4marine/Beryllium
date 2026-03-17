@@ -1,6 +1,7 @@
 from model.world.galaxy import Galaxy
-from model.politics.nation import Nation
 from model.world.calendar import Calendar
+
+from model.architect import *
 
 
 class GameModel:
@@ -10,10 +11,12 @@ class GameModel:
         self.game_paused = False
 
         # --- Major Game Entities ---
-        self.galaxy = None
+        self.galaxy = Galaxy()
         self.nations = []
         self.player_nation = None
         # Future class to log units, tech, star systems, etc.?
+        self.buildings = None
+        self.technologies = None
 
         # --- Player and AI ---
         self.player_nation = None
@@ -23,9 +26,18 @@ class GameModel:
         # --- Configuration/Rules? (can be loaded from data files) ---
         # self.game_rules = data.load_game_rules() # Example: difficulty, game length, resource types
 
+    def initialize_new_game3(self):
+
+        generate_galaxy_with_stars()
+
+        self.calendar.add_daily_observer(self.galaxy)
+
+        self.player_nation = Nation(name="UNE")
+
     def initialize_new_game(self):
         """Transition from the menus to actual gameplay in the world."""
         print("Initializing new game...")
+        return
 
         self.galaxy = Galaxy()
         # Add the galaxy to receive calendar updates both daily and monthly
@@ -46,8 +58,8 @@ class GameModel:
         # --- Deploy nations ---
         self.galaxy.deploy_nations(self.nations)
         #for nation in self.nations:
-            #nation.initialize_nation()
-    
+        #nation.initialize_nation()
+
     def initialize_new_game2(self):
         """TODO: A simplified new game initialization for testing purposes,
         and to serve as a template for future refactoring. Currently unused"""

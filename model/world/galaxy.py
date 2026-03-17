@@ -3,66 +3,19 @@ import networkx as nx
 import random
 import math
 import os
-from model.world.solar_system import SolarSystem
 
 
 class Galaxy:
     def __init__(self):
         """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
-        # Step 1: Generate stars, and their respective solar systems
-        self.galaxy_stars = {}
-        # Step 3: Generate hyperlanes
-        self.hyperlanes = self.generate_prim_hyperlanes()
-        
-    def generate_galaxy_with_stars(self, num_stars=1000, galaxy_size=6000):
-        # number of stars to generate
-        # galaxy_size is the radius of the galaxy (farthest star generated, and used for rendering disk image)
-        stars = []
+        # Using Prim hyperlanes at this time. Will need to be tweaked but for now is quite similar to Stellaris, just a bit sparse. 
+        self.hyperlanes = []
 
-        num_arms = 4
-        arm_tightness = 3  # Lower = looser, higher = tighter spiral
-        arm_spread = 0.25  # Lower = thinner arms, higher = fuzzier arms
-        center_radius = galaxy_size * 0.15
-        overall_rotation = math.pi / 4
-        min_distance = 200
-
-        for i in range(num_stars):
-            while True:
-                # Radial distance (ensuring it's outside the empty center)
-                r = random.uniform(center_radius, galaxy_size)
-
-                # Angle for the spiral arms
-                arm_index = i % num_arms
-                arm_angle = arm_index * (2 * math.pi / num_arms)
-                # Add a small random offset to theta for spread
-                theta_offset = random.gauss(0, arm_spread)
-                theta = overall_rotation + arm_angle + arm_tightness * math.log(r + 1) + theta_offset
-
-                # Convert polar to Cartesian
-                x = r * math.cos(theta)
-                y = r * math.sin(theta)
-
-                # Check minimum distance to other stars
-                too_close = False
-                for star in stars:
-                    distance = math.sqrt((x - star.x) ** 2 + (y - star.y) ** 2)
-                    if distance < min_distance:
-                        too_close = True
-                        break
-
-                # Add the star only if it's far enough from others
-                if not too_close:
-                    break
-
-            name = f"star {i + 1}"
-
-            star = SolarSystem(
-                name=name,
-                galaxy_x=x,
-                galaxy_y=y,
-            )
-            stars.append(star)
-        return stars
+    @property
+    def galaxy_stars(self):
+        system_dict = registry.solar_systems
+        stars = list(system_dict.values())
+        return stars # Should return list of galaxy stars/ solar systems compatible with hyperlane generation and sov map
 
     def generate_delaunay_hyperlanes(self, max_connections=3):
         points = [(star.x, star.y) for star in self.galaxy_stars]

@@ -1,30 +1,13 @@
 import itertools
 
+
 class Registry:
-    """
-    A simple helper class to manage unique ID generation and object storage.
-    This is the backbone of the Universe pattern, ensuring every entity has a unique identifier and can be easily retrieved.
-    """
-    def __init__(self):
-        self._id_gen = itertools.count(start=1000)  # Start IDs at 1000 for readability
-        self.objects = {}  # {id: object}
-
-    def get_uid(self):
-        """Generates a new, unique integer ID."""
-        return next(self._id_gen)
-
-    def register(self, obj):
-        """Registers an object and assigns it a unique ID."""
-        uid = self.get_uid()
-        obj.uid = uid
-        self.objects[uid] = obj
-        return uid
-
-class Universe:
     """
     The central registry for all entities in the galaxy.
     This acts as the 'Source of Truth' for the simulation.
+    Should only have register and 'get' methods.
     """
+
     def __init__(self):
         # 1. THE ID GENERATOR
         # This ensures every single thing in your galaxy has a unique 'Social Security Number'
@@ -34,7 +17,7 @@ class Universe:
         # We use dictionaries {id: object} for O(1) lookup speed
         self.nations = {}
         self.solar_systems = {}
-        self.planets = {}
+        self.celestial_bodies = {}
         self.colonies = {}
         self.buildings = {}
         self.jobs = {}
@@ -60,21 +43,21 @@ class Universe:
     def register_galaxy(self, galaxy):
         uid = self.get_uid()
         galaxy.uid = uid
-        galaxy.universe = self
+        galaxy.registry = self
         self.galaxy = galaxy  # Assuming there's only one galaxy, we can store it directly.
         return uid
-    
+
     def register_nation(self, nation):
         uid = self.get_uid()
         nation.uid = uid
-        nation.universe = self
+        nation.registry = self
         self.nations[uid] = nation
         return uid
 
     def register_colony(self, colony, planet_id, owner_id):
         uid = self.get_uid()
         colony.uid = uid
-        colony.universe = self
+        colony.registry = self
         colony.planet_id = planet_id
         colony.owner_id = owner_id
         self.colonies[uid] = colony
@@ -83,10 +66,10 @@ class Universe:
     def register_building(self, building, colony_id):
         uid = self.get_uid()
         building.uid = uid
-        building.universe = self
+        building.registry = self
         building.colony_id = colony_id
         self.buildings[uid] = building
-        
+
         # Automatically register the jobs inside this building
         if hasattr(building, 'jobs'):
             for job in building.jobs:
@@ -96,7 +79,7 @@ class Universe:
     def register_job(self, job, building_id, colony_id):
         uid = self.get_uid()
         job.uid = uid
-        job.universe = self
+        job.registry = self
         job.building_id = building_id
         job.colony_id = colony_id
         self.jobs[uid] = job
@@ -105,27 +88,28 @@ class Universe:
     def register_pop(self, pop, colony_id, job_id=None):
         uid = self.get_uid()
         pop.uid = uid
-        pop.universe = self
+        pop.registry = self
         pop.colony_id = colony_id
         pop.job_id = job_id
         self.pops[uid] = pop
         return uid
-    
+
     # --- Registration for World Entities ---
-    
+
     def register_solar_system(self, solar_system):
         uid = self.get_uid()
         solar_system.uid = uid
-        solar_system.universe = self
+        solar_system.registry = self
         self.solar_systems[uid] = solar_system
         return uid
-    
-    def register_celestial_body(self, celestial_body, solar_system_id):
+
+    def register_celestial_body(self, celestial_body):
         uid = self.get_uid()
         celestial_body.uid = uid
-        celestial_body.universe = self
-        celestial_body.solar_system_id = solar_system_id
-        self.planets[uid] = celestial_body  # Assuming all celestial bodies are planets for simplicity
+        celestial_body.registry = self
+        #celestial_body.solar_system_id = solar_system_id
+        #celestial_body.parent_id = parent_id
+        self.celestial_bodies[uid] = celestial_body
         return uid
 
     # --- QUERY METHODS ---
@@ -145,11 +129,9 @@ class Universe:
         # You can now sum up production from buildings linked to these colony IDs
         pass
 
-universe = Universe()
 
-"""
-Tips and tricks of the universe pattern:
-- The Universe class is your 'Source of Truth' for all entities. It should be the only place where objects are created and stored.
+"""Tips and tricks of the universe pattern: - The Universe class is your 'Source of Truth' for all entities. It 
+should be the only place where objects are created and stored.
 
 for storing relationships:
 for many to one or one to many relationships, source of truth is the child which holds the UID of its owner/parent.

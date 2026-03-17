@@ -7,6 +7,7 @@ from model.assets import AssetManager
 
 asset_manager = AssetManager()
 
+
 class MyGame:
     def __init__(self):
         self.game_model = GameModel()  # Central simulation
@@ -22,7 +23,8 @@ class MyGame:
             title=self.title,
         )
 
-        print(f"Default texture atlas size: {self.window.ctx.default_atlas.width}x{self.window.ctx.default_atlas.height}")
+        print(
+            f"Default texture atlas size: {self.window.ctx.default_atlas.width}x{self.window.ctx.default_atlas.height}")
         self.window.ctx.default_atlas.resize((8192, 8192))
 
         # Window Components
@@ -32,7 +34,7 @@ class MyGame:
 
         calendar.add_daily_observer(self.window.persistent_ui)
         calendar.add_ui_observer(self.window.persistent_ui)
-        #calendar.add_monthly_observer(self.window.persistent_ui)
+        # calendar.add_monthly_observer(self.window.persistent_ui)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()
@@ -42,7 +44,7 @@ class MyGame:
         self.galaxy_view = GalaxyView(game_model=self.game_model)
 
         self.main_menu_view = None
-        
+
         self.window.show_view(self.galaxy_view)
 
 
@@ -62,4 +64,10 @@ TODO:
 8. CREATE A MAP of systems on the code side of things. Need a visual for how various systems interact. 
 9. Learn how to do logging. Embrace excitement of true spreadsheet simulation.
 10. Pytest? Kind of 9 and a half here ^
+"""
+# TODO:
+"""
+- Central Registry/ universe
+- Architect as a wrapper around it. Architect contains all or most generation code. auto registers on generation.
+- All creation of new in-world objects should be done through the architect. (I think kind of like a command pattern)
 """
