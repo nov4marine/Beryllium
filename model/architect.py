@@ -2,7 +2,7 @@ import math
 import random
 
 from model.world.solar_system import SolarSystem, Star, Planet, Moon, Asteroid
-from model.politics.nation import NationStub
+from model.politics.nation import Nation
 from model import *
 
 from model.registry import Registry
@@ -186,7 +186,7 @@ class Architect:
     def build_nation(self, name):
         """Creates a Nation and registers it globally."""
         # We pass the registry to the Nation, so it can talk to its colonies later
-        new_nation = NationStub(name)
+        new_nation = Nation(name)
 
         self.registry.register_nation(new_nation)
         return new_nation
@@ -227,6 +227,10 @@ class Architect:
         builder.build_colony("New London", planet_id="p_earth_01", nation_id="UNE")
         builder.build_colony("Dust City", planet_id="p_mars_01", nation_id="CMR")
 
+    def build_starting_homeworld(self, planet_id, nation_id):
+        capital = self.build_colony("New London", planet_id, nation_id)
+        # TODO: Flesh out system to flesh out capital starting conditions
+
 
 # ---- Helper Functions ----
 
@@ -251,3 +255,4 @@ def _determine_planet_size(planet_type):
         return random.randint(12, 20)
     else:
         return 20  # Default size
+

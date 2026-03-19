@@ -1,14 +1,17 @@
 from model.world.galaxy import Galaxy
 from model.world.calendar import Calendar
 
-from model.architect import *
+from model.architect import Architect
+from model.registry import Registry
 
 
 class GameModel:
     def __init__(self):
         # --- Core Game Attributes ---
         self.calendar = Calendar(self)
-        self.game_paused = False
+
+        self.registry = Registry
+        self.architect = Architect(self.registry)
 
         # --- Major Game Entities ---
         self.galaxy = Galaxy()
@@ -26,39 +29,15 @@ class GameModel:
         # --- Configuration/Rules? (can be loaded from data files) ---
         # self.game_rules = data.load_game_rules() # Example: difficulty, game length, resource types
 
-    def initialize_new_game3(self):
-
-        generate_galaxy_with_stars()
-
-        self.calendar.add_daily_observer(self.galaxy)
-
-        self.player_nation = Nation(name="UNE")
-
     def initialize_new_game(self):
-        """Transition from the menus to actual gameplay in the world."""
-        print("Initializing new game...")
-        return
-
-        self.galaxy = Galaxy()
-        # Add the galaxy to receive calendar updates both daily and monthly
+        """Game setup"""
+        self.architect.generate_galaxy_with_stars()
+        self.galaxy.sync_stars()
         self.calendar.add_daily_observer(self.galaxy)
-        self.calendar.add_monthly_observer(self.galaxy)
-        self.calendar.add_regular_observer(self.galaxy)
+        self.player_nation = self.architect.build_nation("UNE")
 
-        # Setup Nations 
-        self.player_nation = Nation(name="UNE")
-        self.nations.append(self.player_nation)
-
-        for nation in self.nations:
-            self.calendar.add_daily_observer(nation)
-            self.calendar.add_monthly_observer(nation)
-
-        # Add AI Empires
-
-        # --- Deploy nations ---
-        self.galaxy.deploy_nations(self.nations)
-        #for nation in self.nations:
-        #nation.initialize_nation()
+        system = self.galaxy.pick_unowned_system()
+        new_homeworld = system.pick_homeworld_candidate()
 
     def initialize_new_game2(self):
         """TODO: A simplified new game initialization for testing purposes,
@@ -77,14 +56,3 @@ class GameModel:
         # 6. Add to model
         self.player_nation = nation
         self.galaxy.nations.append(nation)
-
-    # the two below are currently deprecated in favor of nation-level and object-level updates
-    def on_monthly_update(self):
-        """The monthly update loop for the game model."""
-        for nation in self.nations:
-            nation.on_monthly_update()
-
-    def on_daily_update(self):
-        """The daily update loop for the game model."""
-        for nation in self.nations:
-            nation.on_daily_update()

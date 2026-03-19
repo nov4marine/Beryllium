@@ -1,21 +1,22 @@
 import scipy.spatial
+import scipy
 import networkx as nx
 import random
 import math
 import os
-
 
 class Galaxy:
     def __init__(self):
         """THE HEART OF THE GALAXY GENERATION ALGORITHM BY HORUS LUPERCAL"""
         # Using Prim hyperlanes at this time. Will need to be tweaked but for now is quite similar to Stellaris, just a bit sparse. 
         self.hyperlanes = []
+        self.registry = None
+        self.galaxy_stars = None
 
-    @property
-    def galaxy_stars(self):
-        system_dict = registry.solar_systems
+    def sync_stars(self):
+        system_dict = self.registry.solar_systems
         stars = list(system_dict.values())
-        return stars # Should return list of galaxy stars/ solar systems compatible with hyperlane generation and sov map
+        self.galaxy_stars = stars
 
     def generate_delaunay_hyperlanes(self, max_connections=3):
         points = [(star.x, star.y) for star in self.galaxy_stars]
@@ -106,7 +107,14 @@ class Galaxy:
             if surf_w < 1 or surf_h < 1:
                 continue
 
+    def pick_unowned_system(self):
+        unowned_systems = [s for s in self.galaxy_stars if s.owner is None]
+        # TODO: add check to see if valid (eg if all star systems are owned)
+        starting_system = random.sample(unowned_systems, 1)
+        return starting_system
+
     def deploy_nations(self, nations):
+        """Deprecated in favor of splitting up into pick_unowned_system()"""
         # Select potential starting systems
         unowned_systems = [s for s in self.solar_systems if s.owner is None]
 
@@ -123,33 +131,11 @@ class Galaxy:
             system = starting_systems[i]
             system.owner = nation
             nation.solar_systems.append(system)
-            print(f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
+            print(
+                f"Nation {nation.name} deployed to system {system.name}. Consequently, system owner is now {system.owner}")
             system.assign_capital(nation)
-
-    def on_update(self, time_delta):
-        for system in self.solar_systems:
-            system.on_update(time_delta)  
 
     def on_daily_update(self):
         pass
-        #for system in self.solar_systems:
-            #system.on_daily_update()
-
-    def on_monthly_update(self):
-        pass
-        #for system in self.solar_systems:
-            #system.on_monthly_update()
-
-
-class GalaxyStar:
-    def __init__(self, name, x, y, color, radius, solar_system):
-        self.name = name
-        self.x = x
-        self.y = y
-        self.color = color
-        self.radius = radius
-        self.solar_system = solar_system
-
-    @property
-    def owner(self):
-        return self.solar_system.owner
+        for system in self.galaxy_stars:
+            system.on_daily_update()

@@ -114,6 +114,17 @@ class Registry:
 
     # --- QUERY METHODS ---
     # These replace your nested for-loops.
+    def get_anything(self, category, object_uid):
+        # This fetches the dictionary (e.g., self.ships) based on the string 'category'
+        registry_dict = getattr(self, category)
+
+        # Then you can access the UID within that dictionary
+        target = registry_dict.get(f"{object_uid}")
+        return target
+
+    def get_celestials_within_starsystem(self, solar_system_id):
+        """Returns a list of all celestial bodies within a given solar system."""
+        return [b for b in self.celestial_bodies.values() if b.solar_system_id == solar_system_id]
 
     def get_pops_on_colony(self, colony_id):
         """Returns a list of all Pop objects residing on a specific colony."""
@@ -140,3 +151,62 @@ For a many to many relationship, simply create a parent/owner that can track rel
 Think of the game itself that you're cloning for examples: Federations, Galactic Community, join Customs Union, etc.
 
 """
+class Registry:
+    def __init__(self):
+        self.colonies = {}
+        # This is our 'Subscriber List'
+        self._subscribers = []
+
+    def subscribe(self, callback_function):
+        """Allows other systems to sign up for notifications."""
+        self._subscribers.append(callback_function)
+
+    def emit(self, event_name, data):
+        """Sends the message to everyone on the list."""
+        for callback in self._subscribers:
+            callback(event_name, data)
+
+# --- THE SUBSCRIBERS (The Listeners) ---
+
+def update_ui_colors(event_name, data):
+    if event_name == "COLONY_FLIP":
+        print(f"UI: Changing map color for {data['name']}!")
+
+def recalculate_taxes(event_name, data):
+    if event_name == "COLONY_FLIP":
+        print(f"ECON: Moving tax revenue from {data['old']} to {data['new']}.")
+
+# --- SETTING IT UP ---
+
+reg = Registry()
+# These systems 'sign up' once at the start of the game
+reg.subscribe(update_ui_colors)
+reg.subscribe(recalculate_taxes)
+
+# --- THE ACTION ---
+
+# When the owner changes, you just do ONE thing:
+reg.emit("COLONY_FLIP", {"name": "Alpha Centauri", "old": "Earth", "new": "Mars"})
+
+
+class Architect:
+    def __init__(self):
+        # 1. Initialize the Hubs (The Data)
+        self.registry = Registry()
+        self.calendar = Calendar(self)  # From your uploaded file
+
+        # 2. Initialize the Spokes (The Logic)
+        self.relationships = RelationshipManager(self.registry)
+        self.economy = EconomyManager(self.registry)
+
+        # 3. THE WIRING: This is where functions move across classes
+        # We tell the Registry: "When an event happens, run the Economy Manager's logic"
+        self.registry.subscribe(self.economy.handle_event)
+
+        # We can even link your Calendar to the Registry
+        # "Every day, tell the registry to emit a 'NEW_DAY' event"
+        self.calendar.add_daily_observer(self.registry_daily_bridge)
+
+    def registry_daily_bridge(self):
+        """A small helper to push Calendar ticks into the Event System"""
+        self.registry.emit("TICK_DAY", {"date": self.calendar.current_date})

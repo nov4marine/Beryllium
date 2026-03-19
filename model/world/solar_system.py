@@ -13,13 +13,20 @@ class SolarSystem:
         self.uid = uid
         self.solar_system_size = 0  # Can be set later based on bodies
         self.registry = registry
-        self.bodies = None
 
-    def change_owner(self, new_owner):
-        """Change the owner of the solar system."""
-        self.owner = new_owner
+    @property
+    def bodies(self):
+        bodies = self.registry.get_celestials_within_starsystem(self.uid)
+        return bodies
+
+    def pick_homeworld_candidate(self):
+        terrestrial_worlds = [p for p in self.bodies if p.planet_type and p.planet_type == "rocky"]
+        chosen_candidate = random.choice(terrestrial_worlds)
+        return chosen_candidate
+
 
     def assign_capital(self, nation):
+        """Deprecated in favor of pick_homeworld_candidate()"""
         planets = [i for i in self.bodies if i.parent is not None]
         if not planets:
             raise Exception(f"No planets found in system {self.name}")
@@ -36,30 +43,9 @@ class SolarSystem:
         nation.capital = planet
         nation.initialize_nation()
 
-    def determine_planet_type(self, distance_ratio):
-        x = distance_ratio
-        weights = [
-            max(0, 1.0 - x * 2),  # Rocky more likely closer in
-            max(0, 2 ** (-((x - 0.6) ** 2) / 0.03)),  # Gas more likely farther out
-            max(0, x - 0.5)  # Icy dominant in outer regions
-        ]
-        return random.choices(["rocky", "gas", "icy"], weights=weights, k=1)[0]
-
-    def determine_planet_size(self, planet_type):
-        if planet_type == "rocky":
-            return random.randint(24, 36)
-        elif planet_type == "gas":
-            return random.randint(40, 60)
-        elif planet_type == "icy":
-            return random.randint(18, 28)
-        elif planet_type == "moon":
-            return random.randint(12, 20)
-        else:
-            return 20  # Default size
-
-    def on_update(self, time_delta):
+    def on_daily_update(self):
         for body in self.bodies:
-            body.update_orbit(time_delta)
+            body.update_orbit()
 
     def get_star(self):
         return next((b for b in self.bodies if b.body_type == "star"), None)
@@ -111,7 +97,7 @@ class SolarSystem:
 # --- Celestial Body Classes ---
 
 class CelestialBody:
-    def __init__(self, name, body_type, radius, size, color, angle, speed, universe=None, solar_system_id=None,
+    def __init__(self, name, body_type, radius, size, color, angle, speed, registry=None, solar_system_id=None,
                  parent_id=None, **kwargs):
         self.name = name
         self.body_type = body_type  # "star", "planet", "moon", "asteroid"
@@ -120,7 +106,7 @@ class CelestialBody:
         self.color = color or (255, 255, 255)  # Default white
         self.angle = angle  # Current angle in orbital path (radians)
         self.speed = speed  # Orbital speed (normal speed, not radians per time unit)
-        self.universe = universe
+        self.registry = registry
         self.solar_system_id = solar_system_id  # Reference to the solar system that this lives in
         self.parent_id = parent_id  # Another CelestialBody or None which this body orbits around
         self.rect = None  # For mouse collision/highlight
@@ -129,15 +115,16 @@ class CelestialBody:
 
     @property
     def parent(self):
-        parent = self.universe.celestial_bodies.get(self.parent_id)
+        parent = self.registry.celestial_bodies.get(self.parent_id)
         return parent
 
     @property
     def solar_system(self):
-        system = self.universe.solar_systems
+        system = self.registry.solar_systems.get(self.solar_system_id)
+        return system
 
-    def update_orbit(self, time_delta):
-        self.angle += self.speed * time_delta
+    def update_orbit(self):
+        self.angle += self.speed
         self.angle %= 2 * math.pi
 
     def get_position(self):
