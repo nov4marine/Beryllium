@@ -10,7 +10,7 @@ class GameModel:
         # --- Core Game Attributes ---
         self.calendar = Calendar(self)
 
-        self.registry = Registry
+        self.registry = Registry()
         self.architect = Architect(self.registry)
 
         # --- Major Game Entities ---

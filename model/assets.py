@@ -6,6 +6,7 @@ class AssetManager:
     """
     A class to manage game assets like images and sounds.
     """
+
     def __init__(self):
         self.paths = {
             "ui art": Path("assets/ui_art"),
@@ -17,8 +18,7 @@ class AssetManager:
             "resource_icons": Path("assets/ui_icons/resources"),
         }
 
-
-        #self.images  = self.load_images()
+        # self.images  = self.load_images()
         self.portraits = self.load_portraits()
         self.ui_art = self.load_ui_art()
         self.ui_icons = self.load_ui_icons()
@@ -26,11 +26,11 @@ class AssetManager:
         self.building_icons = self.load_building_icons()
         self.resource_icons = self.load_resource_icons()
 
-        self.sounds = {} # Sounds will almost certainly be broken up into categories later
-        self.music = {} # Music will also be broken up into categories later
+        self.sounds = {}  # Sounds will almost certainly be broken up into categories later
+        self.music = {}  # Music will also be broken up into categories later
 
         self.placeholder_image = self.ui_art["default"]
-    
+
     def load_ui_art(self):
         """
         Load UI art from the assets directory.
@@ -42,7 +42,7 @@ class AssetManager:
             image_name = image_name.lower()
             ui_art[image_name] = arcade.load_texture(str(image_file))
         return ui_art
-    
+
     def load_ui_icons(self):
         """
         Load UI icons from the assets directory.
@@ -54,7 +54,7 @@ class AssetManager:
             icon_name = icon_name.lower()
             ui_icons[icon_name] = arcade.load_texture(str(icon_file))
         return ui_icons
-    
+
     def load_building_icons(self):
         """
         Load UI icons from the assets directory.
@@ -66,7 +66,7 @@ class AssetManager:
             icon_name = icon_name.lower()
             building_icons[icon_name] = arcade.load_texture(str(icon_file))
         return building_icons
-    
+
     def load_resource_icons(self):
         """
         Load resource icons from the assets directory.
@@ -78,7 +78,7 @@ class AssetManager:
             icon_name = icon_name.lower()
             resource_icons[icon_name] = arcade.load_texture(str(icon_file))
         return resource_icons
-    
+
     def load_portraits(self):
         """
         Load species portraits from the assets directory.
@@ -90,7 +90,7 @@ class AssetManager:
             portraits[portrait_name] = arcade.load_texture(str(portrait))
         print(f"Loaded {len(portraits)} portraits.")
         return portraits
-    
+
     def get_resource_icon(self, name):
         return self.resource_icons.get(name, self.resource_icons["default"])
 
@@ -106,3 +106,6 @@ class AssetManager:
 
     def get_sound(self, name):
         return self.sounds.get(name)
+
+
+asset_manager = AssetManager()
