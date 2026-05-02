@@ -1,5 +1,6 @@
 import arcade
 import arcade.gui
+import random
 from views.solar_system_view import SolarSystemView
 from views.persistent_ui import GalaxyStarLabel, CelestialBodyLabel
 
@@ -63,14 +64,14 @@ class GalaxyView(arcade.View):
 
     def setup(self):
         # --- Star Sprite Setup ---
-        for star_model in self.galaxy.galaxy_stars:
-            star_sprite = arcade.SpriteCircle(radius=star_model.radius, color=star_model.color, soft=True)
+        for star_model in self.galaxy.solar_systems:
+            star_sprite = arcade.SpriteCircle(radius=random.randint(20, 30), color=star_model.star.color, soft=True)
             star_sprite.center_x = star_model.x
             star_sprite.center_y = star_model.y
             star_sprite.model_reference = star_model
             self.star_sprites.append(star_sprite)
 
-            star_clickbox = arcade.SpriteCircle(star_model.radius * 2, arcade.color.TRANSPARENT_BLACK)
+            star_clickbox = arcade.SpriteCircle(40, arcade.color.TRANSPARENT_BLACK)
             star_clickbox.center_x = star_model.x
             star_clickbox.center_y = star_model.y
             star_clickbox.model_reference = star_model
@@ -91,7 +92,7 @@ class GalaxyView(arcade.View):
         self.maps["sovereignty"].calculate_galaxy_map()
 
         # Prepare world-anchored star label data (not UI widgets)
-        for star_model in self.galaxy.galaxy_stars:
+        for star_model in self.galaxy.solar_systems:
             label = CelestialBodyLabel(star_model, spritelist=self.star_label_sprites)
             self.star_labels.append(label)
 
@@ -158,7 +159,7 @@ class GalaxyView(arcade.View):
         self.star_sprites.draw()
         self.star_clickboxes.draw()
         for clickbox in self.star_clickboxes:
-            clickbox.radius = clickbox.model_reference.radius * 2 / camera_zoom
+            clickbox.radius = clickbox.model_reference.star.size * 2 / camera_zoom
 
         # --- Everything above this line is background stuff that should not be occluded by active elements ---
         # --- World-Anchored Labels (drawn manually, not UI widgets) ---
@@ -197,7 +198,7 @@ class GalaxyView(arcade.View):
         if self.selected_sprite in self.star_clickboxes:
             solar_system_view = SolarSystemView(
                 game_model=self.model,
-                galaxy_star=self.selected_sprite.model_reference,
+                solar_system=self.selected_sprite.model_reference,
                 galaxy_view=self
             )
             self.window.show_view(solar_system_view)
@@ -270,7 +271,7 @@ class SovereigntyOverlay:
 
     def calculate_galaxy_map(self):
         # Use all stars for Voronoi
-        self.stars = list(self.galaxy.galaxy_stars)
+        self.stars = list(self.galaxy.solar_systems)
         self.owned_star_names = {star.name for star in self.stars if star.owner is not None}
 
         if len(self.stars) < 2:

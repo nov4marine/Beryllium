@@ -14,8 +14,7 @@ class Galaxy:
         self.galaxy_disk = None  # Placeholder for galactic disk image
 
         # Step 1: Generate stars, and their respective solar systems
-        self.galaxy_stars = self._generate_galaxy_stars(num_stars, galaxy_size)
-        self.solar_systems = [s.solar_system for s in self.galaxy_stars]
+        self.solar_systems = self._generate_galaxy_stars(num_stars, galaxy_size)
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
         
@@ -70,14 +69,12 @@ class Galaxy:
                 name=name,
                 x=x,
                 y=y,
-                star_color=color,
-                star_radius=radius,
             )
             stars.append(star)
         return stars
 
     def generate_delaunay_hyperlanes(self, max_connections=3):
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.x, star.y) for star in self.solar_systems]
         tri = scipy.spatial.Delaunay(points)
         G = nx.Graph()
         star_connections = {point: [] for point in points}
@@ -103,7 +100,7 @@ class Galaxy:
                     star_connections[end].append(start)
 
         # Convert to GalaxyStar objects
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.x, star.y): star for star in self.solar_systems}
         hyperlanes = []
         for start in star_connections:
             for end in star_connections[start]:
@@ -111,7 +108,7 @@ class Galaxy:
         return hyperlanes
 
     def generate_prim_hyperlanes(self):
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.x, star.y) for star in self.solar_systems]
         G = nx.Graph()
         for i, start in enumerate(points):
             for j, end in enumerate(points):
@@ -120,7 +117,7 @@ class Galaxy:
                 distance = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
                 G.add_edge(start, end, weight=distance)
         mst = nx.minimum_spanning_tree(G, algorithm="prim", weight="weight")
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.x, star.y): star for star in self.solar_systems}
         hyperlanes = []
         for start, end in mst.edges:
             hyperlanes.append((pos_to_star[start], pos_to_star[end]))
@@ -128,13 +125,13 @@ class Galaxy:
 
     def draw_sovereignty_voronoi(self, screen, camera):
         """Draw semi-transparent sovereignty regions using Voronoi polygons."""
-        points = [(star.x, star.y) for star in self.galaxy_stars]
+        points = [(star.x, star.y) for star in self.solar_systems]
         if len(points) < 3:
             return  # Voronoi needs at least 3 points
 
         vor = scipy.spatial.Voronoi(points)
         # Map points to stars for color lookup
-        pos_to_star = {(star.x, star.y): star for star in self.galaxy_stars}
+        pos_to_star = {(star.x, star.y): star for star in self.solar_systems}
 
         for point_idx, region_idx in enumerate(vor.point_region):
             region = vor.regions[region_idx]
@@ -142,7 +139,7 @@ class Galaxy:
                 continue  # Skip infinite regions
 
             polygon = [vor.vertices[i] for i in region]
-            star = self.galaxy_stars[point_idx]
+            star = self.solar_systems[point_idx]
             # Choose color: use star.owner.color if available, else default
             if hasattr(star, "owner") and star.owner is not None:
                 color = star.owner.color

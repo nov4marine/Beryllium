@@ -10,6 +10,7 @@ class SolarSystem:
         self.owner = owner
         self.x = x
         self.y = y
+        self.star = None
         self.solar_system_size = 0  # Can be set later based on bodies
         self.bodies = self._generate_bodies()
 
@@ -44,6 +45,7 @@ class SolarSystem:
             parent=None
         )
         bodies.append(star)
+        self.star = star
 
         # --- Generate planets ---
         num_planets = random.randint(4, 10)  # Random number of planets
@@ -297,6 +299,3 @@ class Asteroid(CelestialBody):
             parent=parent,
             **kwargs
         )
-
-solar_system = SolarSystem("Test System")
-print(f"Solar System Size: {solar_system.solar_system_size}")

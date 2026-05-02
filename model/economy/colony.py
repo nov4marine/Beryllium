@@ -163,12 +163,13 @@ class Colony:
     # 5a. If staffing remains at or below 50% for 3 consecutive months, building should prepare to downsize (remove a level).
     # B. Wages:
     # 1. Buildings should always seek to maximize profits by adjusting wages and to a lesser extent, staffing/production levels.
-    # 1a. Starting wages should planet average for a given profession, else 10. Wages should adjust by +/- 2% per month.
+    # 1a. Starting wages should use planet average for a given profession, else 10. Wages should adjust by +/- 2% per month.
     # 1b. The decision to adjust(reduce) wages should be based on local labor market conditions. Mainly underemployment rates for qualified pops.
     # 1c. To prevent oscillation, wages should not decrease if underemployment is:
     # below 5%, or less than 10 buildings worth of employees, whichever is less.
-    # 2. Buildings should increase wages if:
-    # 2a. They are unable to fill vacancies for more than 1 consecutive months.
+    # 2. Buildings should begin to increase wages if:
+    # 2a. They are unable to fill ANY vacancies for more than 1 consecutive months.
+    # 2b. They are unable to reach target staffing within 6? or 12? months.
     # 3. Wages should be capped if building profit margin is less than 10%
 
 

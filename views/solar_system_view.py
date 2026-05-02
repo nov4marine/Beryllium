@@ -5,10 +5,10 @@ from views.persistent_ui import PersistentUI, PlanetLabel, CelestialBodyLabel, P
 
 
 class SolarSystemView(arcade.View):
-    def __init__(self, game_model, galaxy_star, galaxy_view):
+    def __init__(self, game_model, solar_system, galaxy_view):
         super().__init__()
         self.model = game_model
-        self.solar_system = galaxy_star.solar_system
+        self.solar_system = solar_system
         self.galaxy_view = galaxy_view
 
         # Controller Elements
