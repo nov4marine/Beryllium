@@ -4,7 +4,6 @@ import random
 import math
 import os
 from model.world.solar_system import SolarSystem
-from model.universe import universe
 
 
 class Galaxy:
@@ -20,8 +19,6 @@ class Galaxy:
         # Step 3: Generate hyperlanes
         self.hyperlanes = self.generate_prim_hyperlanes()
         
-        universe.register_galaxy(self)
-
     def _generate_galaxy_stars(self, num_stars, galaxy_size):
         star_colors = [
             (255, 255, 0), (255, 0, 0), (0, 255, 0),
@@ -69,13 +66,12 @@ class Galaxy:
             color = random.choice(star_colors)
             name = f"star {i + 1}"
 
-            star = GalaxyStar(
+            star = SolarSystem(
                 name=name,
                 x=x,
                 y=y,
-                color=color,
-                radius=radius,
-                solar_system=SolarSystem(name=name),
+                star_color=color,
+                star_radius=radius,
             )
             stars.append(star)
         return stars
@@ -202,17 +198,3 @@ class Galaxy:
         pass
         #for system in self.solar_systems:
             #system.on_monthly_update()
-
-
-class GalaxyStar:
-    def __init__(self, name, x, y, color, radius, solar_system):
-        self.name = name
-        self.x = x
-        self.y = y
-        self.color = color
-        self.radius = radius
-        self.solar_system = solar_system
-
-    @property
-    def owner(self):
-        return self.solar_system.owner

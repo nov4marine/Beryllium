@@ -1,7 +1,6 @@
 import arcade.color
 from model.economy.colony import Colony
 from model.economy.market import Market
-from model.universe import universe
 
 
 class Nation:
