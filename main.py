@@ -51,6 +51,9 @@ if __name__ == "__main__":
     arcade.run()
 
 """
+more immediate todo: 
+1. 1st draft refactor of processors complete and ready for testing. Need to adjust model and view to accomodate.
+
 TODO: 
 1. Go over economy loop from the top down. make sure everything is working as intended.
 2. Get building GUI to a workable state, even if that means backing down to text labels. 

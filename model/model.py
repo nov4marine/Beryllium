@@ -2,6 +2,7 @@ from model.world.galaxy import Galaxy
 from model.politics.nation import Nation
 from model.world.calendar import Calendar
 
+from model.managers.colony_managers import *
 
 class GameModel:
     def __init__(self):
@@ -12,16 +13,32 @@ class GameModel:
         # --- Major Game Entities ---
         self.galaxy = None
         self.nations = []
-        self.player_nation = None
         # Future class to log units, tech, star systems, etc.?
 
         # --- Player and AI ---
         self.player_nation = None
-        self.selected_object = None
-        self.current_solar_system = None
 
         # --- Configuration/Rules? (can be loaded from data files) ---
         # self.game_rules = data.load_game_rules() # Example: difficulty, game length, resource types
+
+        # --- ECS Commanders/Processors/Managers... whatever you want to call them ---
+        # --- Colony level 1st for some reason ---
+        self.labor_market = LaborManager()
+        self.building_manager = BuildingManager()
+        self.financial_manager = FinancialManager()
+        self.market_manager = MarketManager()
+
+    def on_monthly_update(self):
+        for nation in self.nations:
+            for colony in nation.colony:
+                self.labor_market.run_market(colony)
+                self.building_manager.produce(colony)
+                self.financial_manager.pay_wages(colony)
+                self.financial_manager.process_consumption(colony)
+                self.market_manager.update_prices(colony)
+            print(f"nation: {nation} monthly tick successfully completed.")
+
+
 
     def initialize_new_game(self):
         """Transition from the menus to actual gameplay in the world."""
@@ -65,14 +82,3 @@ class GameModel:
         # 6. Add to model
         self.player_nation = nation
         self.galaxy.nations.append(nation)
-
-    # the two below are currently deprecated in favor of nation-level and object-level updates
-    def on_monthly_update(self):
-        """The monthly update loop for the game model."""
-        for nation in self.nations:
-            nation.on_monthly_update()
-
-    def on_daily_update(self):
-        """The daily update loop for the game model."""
-        for nation in self.nations:
-            nation.on_daily_update()
