@@ -1,6 +1,8 @@
     
 import copy
 
+from model.data_templates.buildings import *
+
 class BuildingManager:
     """Production and Wholesale"""
     @staticmethod
@@ -146,7 +148,7 @@ class LaborMarketManager:
 
         # 2. Pops are assigned to jobs based on wage and availability. no applications.
         for pop in self.colony.pops:
-            if pop.current_job is not None:
+            if pop.job is not None:
                 continue  # Already employed
 
             # Sort job board by wage descending
@@ -189,13 +191,13 @@ class LaborMarketManager:
 
         # For prototype: assign all pops to the first available job (optional)
         for pop in self.pops:
-            pop.current_job = None
+            pop.job = None
             for building in self.buildings:
                 for job in building.jobs:
                     if job.employees > 0:
-                        pop.current_job = job
+                        pop.job = job
                         break
-                if pop.current_job:
+                if pop.job:
                     break
 
 
@@ -244,7 +246,7 @@ def setup_capital(self):
             self.pops.append(pop)
             job.employees += pop.size
             job.vacancies -= pop.size
-            pop.current_job = job
+            pop.job = job
             
     # Perform a couple of monthly updates to stabilize the economy and populate statistics, as well as log initial state to detect issues.
     for _ in range(2):

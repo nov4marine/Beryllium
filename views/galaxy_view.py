@@ -3,6 +3,7 @@ import arcade.gui
 import random
 from views.solar_system_view import SolarSystemView
 from views.persistent_ui import GalaxyStarLabel, CelestialBodyLabel
+from views.assets import assets
 
 from pyglet.graphics import Batch
 
@@ -18,8 +19,8 @@ class GalaxyView(arcade.View):
 
         self.world_ui_manager = arcade.gui.UIManager()
         # Controller Elements
-        self.asset_manager = self.window.asset_manager
-        self.calendar = self.window.calendar
+        self.asset_manager = assets
+        self.calendar = self.model.calendar
         self.selected_sprite = None
 
         # Dictionary to hold different map overlays and map modes

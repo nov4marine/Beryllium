@@ -1,7 +1,7 @@
 import copy
 from model.data_templates.buildings import *
 
-class Initializer:
+class SessionManager:
     """Contains methods for setting up a new game"""
     @staticmethod
     def setup_capital(colony):

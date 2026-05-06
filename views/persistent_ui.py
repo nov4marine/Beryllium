@@ -3,6 +3,7 @@ import arcade.gui
 #from views.UI_stuff.planet_menu import PlanetMenu, BuildingGUI
 #from views.UI_stuff.market_gui import MarketGUI
 from views.ui_elements.hud_elements import TopBar
+from views.assets import assets
 
 """
 Master UI class that contains all the elements that persist across views, such as the resource bar, date, and any other HUD elements.
@@ -26,10 +27,10 @@ class PersistentUI:
     Also serves as the primary observer of the calendar, and thus the main conduit for updating the UI based on the passage of time.
     #TODO: refactor calendar to be pauseable, but also still update UI changes even when paused. A core part of paradox games is pausing to do a bunch of micro.
     """
-    def __init__(self, game_model, asset_manager):
+    def __init__(self, game_model):
         self.game_model = game_model
         self.calendar = game_model.calendar
-        self.asset_manager = asset_manager
+        self.asset_manager = assets
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
         self.player_nation = None
