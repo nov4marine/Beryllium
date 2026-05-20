@@ -1,7 +1,7 @@
 import arcade
 import arcade.gui
 from views.persistent_ui import PersistentUI, PlanetLabel, CelestialBodyLabel, PlanetLabel, CelestialBodySprite, draw_dashed_circle_outline
-
+from views.assets import assets
 
 
 class SolarSystemView(arcade.View):
@@ -14,8 +14,8 @@ class SolarSystemView(arcade.View):
         # Controller Elements
         self.solarsystemui_manager = arcade.gui.UIManager()
         self.persistent_ui = self.window.persistent_ui
-        self.asset_manager = self.window.asset_manager
-        self.calendar = self.window.calendar
+        self.asset_manager = assets
+        self.calendar = self.model.calendar
         self.selected_sprite = None
 
         self.solar_system_background = self.asset_manager.ui_art.get("solar_system_background")

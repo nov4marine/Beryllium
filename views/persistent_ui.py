@@ -35,11 +35,13 @@ class PersistentUI:
         self.manager.enable()
         self.player_nation = None
 
+        self.calendar.add_daily_observer(self)
+
         # --- Sub-Components ---
         # all of these must be added to draw
         #self.planet_menu = PlanetMenu(self.asset_manager)
         #self.building_gui = BuildingGUI(self, self.asset_manager)
-        self.top_bar = TopBar(self, self.asset_manager)
+        self.top_bar = TopBar(self)
         #self.left_sidebar = LeftSideBar(self, self.manager, self.asset_manager)
         #self.right_ledger = RightLedger(self, self.manager, self.asset_manager)
         #TODO: refactor to consolidate things like the resource bar/ top_bar into a subcomponent. This manager should not directly handle individual UI elements.

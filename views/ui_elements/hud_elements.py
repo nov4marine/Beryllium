@@ -1,6 +1,7 @@
 import arcade
 import arcade.gui
 from arcade.gui import UIAnchorLayout, UILabel, UIFlatButton
+from views.assets import assets
 
 class LeftSideBar:
     def __init__(self, persistent_ui, manager, asset_manager):
@@ -52,10 +53,10 @@ class RightLedger:
             self.persistentui.show_planet_menu(colony)
 
 class TopBar(UIAnchorLayout):
-    def __init__(self, persistentui, asset_manager):
+    def __init__(self, persistentui):
         self.persistentui = persistentui
         self.player_nation = None
-        self.assets = asset_manager
+        self.assets = assets
         self.size_hint = (1, 0.05)
         self.with_background(color=arcade.color.DARK_IMPERIAL_BLUE)
 
