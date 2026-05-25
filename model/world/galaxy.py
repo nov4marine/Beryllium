@@ -73,39 +73,6 @@ class Galaxy:
             stars.append(star)
         return stars
 
-    def generate_delaunay_hyperlanes(self, max_connections=3):
-        points = [(star.x, star.y) for star in self.solar_systems]
-        tri = scipy.spatial.Delaunay(points)
-        G = nx.Graph()
-        star_connections = {point: [] for point in points}
-
-        for simplex in tri.simplices:
-            for i in range(3):
-                start = points[simplex[i]]
-                end = points[simplex[(i + 1) % 3]]
-                distance = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
-                G.add_edge(start, end, weight=distance)
-
-        mst_edges = list(nx.minimum_spanning_edges(G, algorithm="kruskal", data=False))
-        for start, end in mst_edges:
-            star_connections[start].append(end)
-            star_connections[end].append(start)
-
-        for simplex in tri.simplices:
-            for i in range(3):
-                start = points[simplex[i]]
-                end = points[simplex[(i + 1) % 3]]
-                if len(star_connections[start]) < max_connections and len(star_connections[end]) < max_connections:
-                    star_connections[start].append(end)
-                    star_connections[end].append(start)
-
-        # Convert to GalaxyStar objects
-        pos_to_star = {(star.x, star.y): star for star in self.solar_systems}
-        hyperlanes = []
-        for start in star_connections:
-            for end in star_connections[start]:
-                hyperlanes.append((pos_to_star[start], pos_to_star[end]))
-        return hyperlanes
 
     def generate_prim_hyperlanes(self):
         points = [(star.x, star.y) for star in self.solar_systems]
@@ -191,7 +158,3 @@ class Galaxy:
         #for system in self.solar_systems:
             #system.on_daily_update()
 
-    def on_monthly_update(self):
-        pass
-        #for system in self.solar_systems:
-            #system.on_monthly_update()

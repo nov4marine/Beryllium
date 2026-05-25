@@ -32,37 +32,6 @@ class Colony:
         """
         return self.local_bls.statistics
 
-    # Job assignment methods
-    def assign_jobs_simple(self):
-        """DEPRACATED
-        Directly assigns pops to job vacancies in order, without applications or splitting.
-        All pops are treated as a single group for now.
-        """
-        total_pops = sum(pop.size for pop in self.pops)
-        pops_remaining = total_pops
-
-        for building in self.buildings:
-            for job in building.jobs:
-                if pops_remaining <= 0:
-                    job.employees = 0
-                    job.vacancies = job.max_quantity
-                    continue
-                to_assign = min(job.vacancies, pops_remaining)
-                job.employees = to_assign
-                job.vacancies = job.max_quantity - to_assign
-                pops_remaining -= to_assign
-
-        # For prototype: assign all pops to the first available job (optional)
-        for pop in self.pops:
-            pop.current_job = None
-            for building in self.buildings:
-                for job in building.jobs:
-                    if job.employees > 0:
-                        pop.current_job = job
-                        break
-                if pop.current_job:
-                    break
-
     def run_labor_market(self):
         """
         A more complex labor market simulation.

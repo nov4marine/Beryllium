@@ -3,6 +3,7 @@ import arcade.gui
 import random
 from views.solar_system_view import SolarSystemView
 from views.persistent_ui import GalaxyStarLabel, CelestialBodyLabel
+from views.assets import assets
 
 from pyglet.graphics import Batch
 
@@ -10,16 +11,16 @@ from scipy.spatial import Voronoi
 
 
 class GalaxyView(arcade.View):
-    def __init__(self, game_model):
+    def __init__(self, game_model, pergui):
         super().__init__()
         self.model = game_model
-        self.persistent_ui = self.window.persistent_ui
+        self.persistent_ui = pergui
         self.galaxy = self.model.galaxy
 
         self.world_ui_manager = arcade.gui.UIManager()
         # Controller Elements
-        self.asset_manager = self.window.asset_manager
-        self.calendar = self.window.calendar
+        self.asset_manager = assets
+        self.calendar = game_model.calendar
         self.selected_sprite = None
 
         # Dictionary to hold different map overlays and map modes
@@ -199,7 +200,8 @@ class GalaxyView(arcade.View):
             solar_system_view = SolarSystemView(
                 game_model=self.model,
                 solar_system=self.selected_sprite.model_reference,
-                galaxy_view=self
+                galaxy_view=self,
+                pergui=self.persistent_ui
             )
             self.window.show_view(solar_system_view)
         self.pan_map_camera(delta_time)

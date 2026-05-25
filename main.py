@@ -3,9 +3,8 @@ from model.model import GameModel
 from views.galaxy_view import GalaxyView
 # from views.solar_system_view import SolarSystemView
 from views.persistent_ui import PersistentUI
-from model.assets import AssetManager
+from views.solar_system_view import SolarSystemView
 
-asset_manager = AssetManager()
 
 class MyGame:
     def __init__(self):
@@ -26,24 +25,16 @@ class MyGame:
         self.window.ctx.default_atlas.resize((8192, 8192))
 
         # Window Components
-        self.window.calendar = calendar
-        self.window.asset_manager = asset_manager
-        self.window.persistent_ui = PersistentUI(self.game_model, asset_manager)
-
-        calendar.add_daily_observer(self.window.persistent_ui)
-        calendar.add_ui_observer(self.window.persistent_ui)
-        #calendar.add_monthly_observer(self.window.persistent_ui)
+        self.pergui = PersistentUI(self.game_model)
 
         # --- Resources to load ---
         self.game_model.initialize_new_game()
-        player_nation = self.game_model.player_nation
-        self.window.persistent_ui.set_player_nation(player_nation)
 
-        self.galaxy_view = GalaxyView(game_model=self.game_model)
-
-        self.main_menu_view = None
+        self.window.galaxy_view = GalaxyView(game_model=self.game_model, pergui=self.pergui)
+        #self.window.solar_system_view = SolarSystemView(game_model=self.game_model, pergui=self.pergui)
+        #self.window.main_menu_view = None
         
-        self.window.show_view(self.galaxy_view)
+        self.window.show_view(self.window.galaxy_view)
 
 
 if __name__ == "__main__":
