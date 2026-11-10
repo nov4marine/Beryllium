@@ -106,5 +106,3 @@ class AssetManager:
 
     def get_sound(self, name):
         return self.sounds.get(name)
-    
-assets = AssetManager()
